@@ -289,43 +289,25 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
       </div>
     </div>
 
-    <div class="panel" id="panel-review">
+ <div class="panel" id="panel-review">
       <div class="card">
-        <div class="card-title"><div class="icon icon-green">🔁</div>课后复习</div>
-        <div class="card-sub">AI 结合课件和录音内容生成复习材料</div>
-        <div style="margin-bottom:20px;">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">一键生成：</div>
-          <div class="output-options">
-            <button class="opt-btn" onclick="quickReview('summary')">📋 课程总结</button>
-            <button class="opt-btn" onclick="quickReview('flashcards')">🗂 Flashcard</button>
-            <button class="opt-btn" onclick="quickReview('questions')">❓ 练习题</button>
-            <button class="opt-btn" onclick="quickReview('mindmap')">🗺 知识框架</button>
-          </div>
-        </div>
-        <div class="loading" id="reviewLoading"><div class="spinner"></div><span>AI 正在整理...</span></div>
-        <div id="flashcardArea" style="display:none;">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">点击卡片查看答案：</div>
-          <div class="flashcard-grid" id="flashcardGrid"></div>
-        </div>
-        <div class="result-box" id="reviewResult" style="margin-top:0;">
-          <div class="result-header"><span id="reviewResultTitle">复习内容</span><button class="copy-btn" onclick="copyResult('reviewResultContent')">复制</button></div>
-          <div class="result-content" id="reviewResultContent"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title"><div class="icon icon-green">💬</div>问 AI</div>
-        <div class="card-sub">根据这节课的内容回答你的问题</div>
+        <div class="card-title"><div class="icon icon-green">💬</div>课后复习 & 问 AI</div>
+        <div class="card-sub">AI 结合课件和录音内容回答你的问题</div>
         <div class="chat-messages" id="chatMessages">
           <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <button class="opt-btn" onclick="quickAsk('请根据课件和录音给我一个详细的课程总结')">📋 课程总结</button>
+          <button class="opt-btn" onclick="quickAsk('请生成8-12张Flashcard，格式：正面：英文术语，背面：中文解释加例子')">🗂 Flashcard</button>
+          <button class="opt-btn" onclick="quickAsk('请生成5道练习题并附上答案')">❓ 练习题</button>
+          <button class="opt-btn" onclick="quickAsk('请生成这节课的知识框架')">🗺 知识框架</button>
+        </div>
         <div class="chat-input-row">
-<textarea id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" rows="1" style="flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:99px;background:var(--paper);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);resize:none;line-height:1.4;overflow:hidden;"></textarea>
+          <textarea id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" rows="1" style="flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:99px;background:var(--paper);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);resize:none;line-height:1.4;overflow:hidden;"></textarea>
           <button class="btn btn-primary" onclick="sendChat()">发送</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
 <button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
 
@@ -728,7 +710,11 @@ function renderFlashcards(text) {
   document.getElementById('flashcardGrid').innerHTML = cards.map(c=>`<div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="front">${c.front}</div><div class="back">${c.back||''}</div><div class="fc-hint">点击翻转</div></div>`).join('');
   document.getElementById('flashcardArea').style.display='block';
 }
-
+function quickAsk(prompt) {
+  const input = document.getElementById('chatInput');
+  input.value = prompt;
+  sendChat();
+}
 async function sendChat() {
   const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q) return; input.value=''; addMsg('user',q);
   const content=document.getElementById('courseContentText').value.trim();
