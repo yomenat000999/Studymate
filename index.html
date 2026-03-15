@@ -6,248 +6,349 @@
 <title>StudyMate · 留学生AI学习助手</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --ink: #1a1a2e; --paper: #f5f0e8; --cream: #ede8dc;
-    --accent: #c8553d; --accent2: #4a7c6f; --gold: #c9a84c;
-    --muted: #7a7568; --border: #d4cfc4; --card: #faf7f2; --radius: 12px;
-  }
-  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
-  header { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--border); background: var(--paper); position: sticky; top: 0; z-index: 100; }
-  .logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); letter-spacing: -0.3px; }
-  .logo span { color: var(--accent); }
-  .api-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; }
-  .api-dot.active { background: #4caf50; box-shadow: 0 0 6px #4caf5080; }
-  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
-  .hero { text-align: center; margin-bottom: 48px; animation: fadeUp 0.6s ease both; }
-  .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(28px, 5vw, 44px); line-height: 1.15; margin-bottom: 12px; }
-  .hero h1 em { font-style: italic; color: var(--accent); }
-  .hero p { color: var(--muted); font-size: 16px; max-width: 480px; margin: 0 auto; }
-  .tabs { display: flex; gap: 4px; background: var(--cream); border: 1px solid var(--border); border-radius: 99px; padding: 4px; margin-bottom: 32px; animation: fadeUp 0.6s 0.1s ease both; }
-  .tab { flex: 1; padding: 9px 16px; border: none; background: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-  .tab.active { background: var(--ink); color: #fff; }
-  .tab:not(.active):hover { color: var(--ink); }
-  .panel { display: none; animation: fadeUp 0.4s ease both; }
-  .panel.active { display: block; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
-  .card-title { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
-  .card-title .icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-  .icon-orange { background: #fde8e3; } .icon-green { background: #e3f0ed; } .icon-gold { background: #fdf4e3; }
-  .card-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-  .upload-zone { border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 36px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--paper); position: relative; }
-  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: #fdf3f1; }
-  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .upload-icon { font-size: 32px; margin-bottom: 10px; }
-  .upload-zone p { color: var(--muted); font-size: 14px; }
-  .upload-zone strong { color: var(--ink); }
-  textarea { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); resize: vertical; min-height: 120px; transition: border-color 0.2s; line-height: 1.6; }
-  textarea:focus { outline: none; border-color: var(--accent); }
-  textarea::placeholder { color: #b0ab9f; }
-  .output-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-  .opt-btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 99px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; }
-  .opt-btn.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .opt-btn:not(.selected):hover { border-color: var(--ink); color: var(--ink); }
-  .lang-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 13px; color: var(--muted); }
-  select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); cursor: pointer; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-  .btn-primary { background: var(--ink); color: #fff; }
-  .btn-primary:hover { background: #2d2d4a; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,26,46,0.2); }
-  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
-  .btn-danger { background: var(--accent); color: #fff; }
-  .btn-danger:hover { background: #b34733; }
-  .rec-status { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--cream); border-radius: var(--radius); margin-bottom: 16px; }
-  .rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
-  .rec-dot.recording { background: var(--accent); animation: pulse 1.2s ease infinite; }
-  .rec-timer { font-family: monospace; font-size: 18px; color: var(--ink); }
-  .rec-label { font-size: 13px; color: var(--muted); margin-left: auto; }
-  .transcript-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-height: 100px; background: var(--paper); font-size: 14px; line-height: 1.7; color: var(--ink); max-height: 220px; overflow-y: auto; }
-  .notes-area { width: 100%; min-height: 300px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.8; color: var(--ink); resize: vertical; }
-  .notes-area:focus { outline: none; border-color: var(--accent2); }
-  .notes-toolbar { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-  .tool-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); font-size: 13px; cursor: pointer; color: var(--muted); transition: all 0.15s; }
-  .tool-btn:hover { background: var(--cream); color: var(--ink); }
-  .result-box { border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); overflow: hidden; margin-top: 20px; display: none; animation: fadeUp 0.4s ease both; }
-  .result-header { padding: 14px 20px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; }
-  .result-content { padding: 20px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; max-height: 500px; overflow-y: auto; color: var(--ink); }
-  .copy-btn { padding: 4px 12px; border: 1px solid rgba(255,255,255,0.3); border-radius: 99px; background: transparent; color: #fff; font-size: 12px; cursor: pointer; transition: all 0.15s; }
-  .copy-btn:hover { background: rgba(255,255,255,0.15); }
-  .loading { display: none; align-items: center; gap: 10px; padding: 14px 0; color: var(--muted); font-size: 14px; }
-  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-  .flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
-  .flashcard { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.2s; min-height: 110px; }
-  .flashcard:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
-  .flashcard .front { font-weight: 500; font-size: 14px; color: var(--ink); margin-bottom: 10px; }
-  .flashcard .back { font-size: 13px; color: var(--muted); display: none; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
-  .flashcard.flipped .back { display: block; }
-  .flashcard.flipped { background: var(--cream); }
-  .fc-hint { font-size: 12px; color: #b0ab9f; margin-top: 8px; }
-  .chat-messages { max-height: 360px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); margin-bottom: 12px; }
-  .msg { max-width: 80%; padding: 12px 16px; border-radius: var(--radius); font-size: 14px; line-height: 1.6; animation: fadeUp 0.3s ease both; }
-  .msg.user { background: var(--ink); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-  .msg.ai { background: var(--cream); color: var(--ink); align-self: flex-start; border-bottom-left-radius: 4px; }
-  .msg.ai .msg-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
-  .chat-input-row { display: flex; gap: 10px; }
-  .chat-input-row input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 99px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); transition: border-color 0.2s; }
-  .chat-input-row input:focus { outline: none; border-color: var(--accent2); }
-  .chat-input-row input::placeholder { color: #b0ab9f; }
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 10px 22px; border-radius: 99px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 2000; pointer-events: none; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
-  @media (max-width: 600px) { header { padding: 16px 20px; } .container { padding: 24px 16px; } .tab { font-size: 12px; padding: 8px 10px; } }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1a2e; --paper: #f5f0e8; --cream: #ede8dc;
+  --accent: #c8553d; --accent2: #4a7c6f;
+  --muted: #7a7568; --border: #d4cfc4; --card: #faf7f2; --radius: 12px;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: var(--paper); position: sticky; top: 0; z-index: 100; gap: 16px; }
+.logo { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); flex-shrink: 0; }
+.logo span { color: var(--accent); }
+.header-center { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.course-selector { display: flex; align-items: center; gap: 8px; background: var(--cream); border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px; cursor: pointer; font-size: 13px; min-width: 0; max-width: 320px; transition: border-color 0.2s; }
+.course-selector:hover { border-color: var(--accent); }
+.course-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-new-course { padding: 6px 14px; background: var(--ink); color: #fff; border: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; flex-shrink: 0; }
+.ai-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #4caf50; box-shadow: 0 0 6px #4caf5080; }
+.sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: none; }
+.sidebar-overlay.open { display: block; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 300px; background: var(--card); border-right: 1px solid var(--border); z-index: 201; transform: translateX(-100%); transition: transform 0.3s; display: flex; flex-direction: column; }
+.sidebar.open { transform: translateX(0); }
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.sidebar-header h3 { font-family: 'DM Serif Display', serif; font-size: 18px; }
+.sidebar-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+.sidebar-body { flex: 1; overflow-y: auto; padding: 12px; }
+.course-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; margin-bottom: 4px; }
+.course-item:hover { background: var(--cream); }
+.course-item.active { background: var(--ink); color: #fff; }
+.course-item.active .course-item-sub { color: rgba(255,255,255,0.6); }
+.course-item-icon { font-size: 18px; flex-shrink: 0; }
+.course-item-info { flex: 1; min-width: 0; }
+.course-item-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-item-sub { font-size: 12px; color: var(--muted); }
+.course-item-del { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--muted); opacity: 0; padding: 2px 6px; }
+.course-item:hover .course-item-del { opacity: 1; }
+.course-item.active .course-item-del { opacity: 0.6; color: #fff; }
+.sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+.btn-add-course { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(26,26,46,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 420px; width: 100%; }
+.modal h2 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; }
+.modal p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+.modal input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); margin-bottom: 16px; }
+.modal input:focus { outline: none; border-color: var(--accent); }
+.modal-btns { display: flex; gap: 10px; }
+.container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+.course-banner { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.course-banner-info h2 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 4px; }
+.course-banner-info p { color: var(--muted); font-size: 13px; }
+.course-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-sm { padding: 6px 14px; border: 1px solid var(--border); border-radius: 99px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+.btn-sm:hover { border-color: var(--ink); color: var(--ink); }
+.btn-sm.danger:hover { border-color: var(--accent); color: var(--accent); }
+.empty-state { text-align: center; padding: 80px 20px; }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h2 { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; }
+.empty-state p { color: var(--muted); margin-bottom: 24px; }
+.tabs { display: flex; gap: 4px; background: var(--cream); border: 1px solid var(--border); border-radius: 99px; padding: 4px; margin-bottom: 28px; }
+.tab { flex: 1; padding: 9px 16px; border: none; background: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.tab.active { background: var(--ink); color: #fff; }
+.panel { display: none; }
+.panel.active { display: block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+.card-title { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.icon-orange { background: #fde8e3; } .icon-green { background: #e3f0ed; } .icon-gold { background: #fdf4e3; }
+.card-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.upload-zone { border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 36px; text-align: center; background: var(--paper); position: relative; overflow: hidden; transition: all 0.2s; }
+.upload-zone:hover { border-color: var(--accent); background: #fdf3f1; }
+.upload-zone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 32px; margin-bottom: 10px; pointer-events: none; }
+.upload-zone p { color: var(--muted); font-size: 14px; pointer-events: none; }
+.upload-zone strong { color: var(--ink); }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--cream); border-radius: 8px; font-size: 13px; margin-top: 6px; }
+.file-item span:first-child { flex: 1; color: var(--accent2); }
+.file-item button { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 0 2px; }
+textarea { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); resize: vertical; min-height: 120px; line-height: 1.6; }
+textarea:focus { outline: none; border-color: var(--accent); }
+textarea::placeholder { color: #b0ab9f; }
+.output-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.opt-btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 99px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.opt-btn.selected { background: var(--ink); color: #fff; border-color: var(--ink); }
+.lang-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 13px; color: var(--muted); }
+select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); cursor: pointer; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: #2d2d4a; }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-danger { background: var(--accent); color: #fff; }
+.rec-status { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--cream); border-radius: var(--radius); margin-bottom: 16px; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+.rec-dot.recording { background: var(--accent); animation: pulse 1.2s ease infinite; }
+.rec-timer { font-family: monospace; font-size: 18px; }
+.rec-label { font-size: 13px; color: var(--muted); margin-left: auto; }
+.transcript-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-height: 100px; background: var(--paper); font-size: 14px; line-height: 1.7; max-height: 220px; overflow-y: auto; }
+.result-box { border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); overflow: hidden; margin-top: 20px; display: none; }
+.result-header { padding: 14px 20px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: space-between; }
+.result-content { padding: 20px; font-size: 14px; line-height: 1.8; white-space: pre-wrap; max-height: 500px; overflow-y: auto; }
+.copy-btn { padding: 4px 12px; border: 1px solid rgba(255,255,255,0.3); border-radius: 99px; background: transparent; color: #fff; font-size: 12px; cursor: pointer; }
+.loading { display: none; align-items: center; gap: 10px; padding: 14px 0; color: var(--muted); font-size: 14px; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+.flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
+.flashcard { background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; min-height: 110px; transition: all 0.2s; }
+.flashcard:hover { border-color: var(--accent); }
+.flashcard .front { font-weight: 500; font-size: 14px; margin-bottom: 10px; }
+.flashcard .back { font-size: 13px; color: var(--muted); display: none; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
+.flashcard.flipped .back { display: block; }
+.flashcard.flipped { background: var(--cream); }
+.fc-hint { font-size: 12px; color: #b0ab9f; margin-top: 8px; }
+.chat-messages { max-height: 360px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); margin-bottom: 12px; }
+.msg { max-width: 80%; padding: 12px 16px; border-radius: var(--radius); font-size: 14px; line-height: 1.6; }
+.msg.user { background: var(--ink); color: #fff; align-self: flex-end; }
+.msg.ai { background: var(--cream); color: var(--ink); align-self: flex-start; }
+.msg-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+.chat-input-row { display: flex; gap: 10px; }
+.chat-input-row input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 99px; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); }
+.chat-input-row input:focus { outline: none; border-color: var(--accent2); }
+.chat-input-row input::placeholder { color: #b0ab9f; }
+.float-notes-btn { position: fixed; bottom: 28px; right: 28px; width: 52px; height: 52px; background: var(--ink); color: #fff; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; box-shadow: 0 4px 20px rgba(26,26,46,0.25); z-index: 150; display: flex; align-items: center; justify-content: center; }
+.float-notes-btn:hover { background: #2d2d4a; transform: scale(1.05); }
+.float-notes-panel { position: fixed; bottom: 90px; right: 28px; width: 340px; max-height: 480px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px rgba(26,26,46,0.18); z-index: 150; display: none; flex-direction: column; overflow: hidden; }
+.float-notes-panel.open { display: flex; }
+.float-notes-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--ink); color: #fff; }
+.float-notes-header h4 { font-family: 'DM Serif Display', serif; font-size: 16px; }
+.float-notes-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 18px; cursor: pointer; }
+.float-notes-toolbar { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; background: var(--cream); }
+.float-tool-btn { padding: 3px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); font-size: 12px; cursor: pointer; color: var(--muted); }
+.float-tool-btn:hover { background: var(--cream); color: var(--ink); }
+.float-notes-textarea { flex: 1; padding: 14px 16px; border: none; background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); resize: none; line-height: 1.7; min-height: 200px; width: 100%; }
+.float-notes-textarea:focus { outline: none; }
+.float-notes-footer { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 10px 22px; border-radius: 99px; font-size: 13px; opacity: 0; transition: all 0.3s; z-index: 2000; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.6; transform:scale(1.3); } }
+@media (max-width: 600px) {
+  header { padding: 12px 16px; }
+  .container { padding: 20px 16px; }
+  .tab { font-size: 12px; padding: 8px 8px; }
+  .float-notes-panel { right: 12px; width: calc(100vw - 24px); }
+}
 </style>
 </head>
-<body><header>
-  <div class="logo">Study<span>Mate</span></div>
-  <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
-    <div class="api-dot active"></div>
-    <span>AI 已就绪</span>
+<body><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h3>我的课程</h3>
+    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
   </div>
+  <div class="sidebar-body" id="courseList"></div>
+  <div class="sidebar-footer">
+    <button class="btn-add-course" onclick="showNewCourseModal()">＋ 新建课程</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newCourseModal">
+  <div class="modal">
+    <h2>新建课程</h2>
+    <p>给这节课起个名字，比如「Week 3 - Marketing策略」</p>
+    <input type="text" id="newCourseName" placeholder="课程名称..." maxlength="50" onkeydown="if(event.key==='Enter')createCourse()"/>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="createCourse()">创建</button>
+      <button class="btn" style="background:var(--cream);color:var(--ink);" onclick="closeNewCourseModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Study<span>Mate</span></div>
+  <div class="header-center">
+    <div class="course-selector" onclick="openSidebar()">
+      <span>📚</span>
+      <span class="course-name" id="headerCourseName">选择课程</span>
+      <span style="font-size:10px;color:var(--muted);">▼</span>
+    </div>
+    <button class="btn-new-course" onclick="showNewCourseModal()">＋ 新建</button>
+  </div>
+  <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
 </header>
 
 <div class="container">
-  <div class="hero">
-    <h1>你的 AI 留学<em>学习助手</em></h1>
-    <p>上传课件，开启录音，AI 自动生成预习材料、课程重点和复习内容</p>
+  <div id="emptyState" class="empty-state">
+    <div class="empty-icon">📚</div>
+    <h2>还没有课程</h2>
+    <p>新建一个课程开始学习，每节课的课件、录音、笔记都会单独保存</p>
+    <button class="btn btn-primary" onclick="showNewCourseModal()">＋ 新建第一节课</button>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('prep')">📚 预习 & 重点</button>
-    <button class="tab" onclick="switchTab('record')">🎙 课堂录音</button>
-    <button class="tab" onclick="switchTab('review')">🔁 课后复习</button>
-    <button class="tab" onclick="switchTab('notes')">📝 我的笔记</button>
-  </div>
+  <div id="courseContent" style="display:none;">
+    <div class="course-banner">
+      <div class="course-banner-info">
+        <h2 id="bannerCourseName"></h2>
+        <p id="bannerCourseDate"></p>
+      </div>
+      <div class="course-banner-actions">
+        <button class="btn-sm" onclick="renameCourse()">✏️ 重命名</button>
+        <button class="btn-sm danger" onclick="deleteCourse()">🗑 删除</button>
+      </div>
+    </div>
 
-  <div class="panel active" id="panel-prep">
-    <div class="card">
-      <div class="card-title"><div class="icon icon-orange">📄</div>上传课件</div>
-      <div class="card-sub">支持多个文件，或直接粘贴课件文字</div>
-      <div class="upload-zone" id="uploadZone">
-  <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx,.doc,.docx,.txt" multiple onchange="handleFiles(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
-  <div class="upload-icon">📎</div>
-  <p><strong>点击上传</strong>或拖拽文件到这里（可同时选多个）</p>
-  <p style="margin-top:4px; font-size:12px;">PDF · PPT · Word · TXT · 支持多文件</p>
-</div>
-      <div id="fileList" style="margin-top:12px; display:flex; flex-direction:column; gap:6px;"></div>
-      <div style="margin: 16px 0; text-align:center; color:var(--muted); font-size:13px;">— 或者直接粘贴课件内容 —</div>
-      <textarea id="courseContent" placeholder="把课件文字、老师发的 reading 内容粘贴到这里..." rows="5"></textarea>
-      <div style="margin-top:16px;">
-        <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">我需要：</div>
-        <div class="output-options">
-          <button class="opt-btn selected" onclick="toggleOpt(this)">📖 预习重点</button>
-          <button class="opt-btn selected" onclick="toggleOpt(this)">🎯 核心概念</button>
-          <button class="opt-btn selected" onclick="toggleOpt(this)">⚠️ 难点解析</button>
-          <button class="opt-btn" onclick="toggleOpt(this)">🗂 Flashcard</button>
-          <button class="opt-btn" onclick="toggleOpt(this)">🌏 中文翻译</button>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('prep')">📖 预习 & 重点</button>
+      <button class="tab" onclick="switchTab('record')">🎙 课堂录音</button>
+      <button class="tab" onclick="switchTab('review')">🔁 课后复习</button>
+    </div>
+
+    <div class="panel active" id="panel-prep">
+      <div class="card">
+        <div class="card-title"><div class="icon icon-orange">📄</div>上传课件</div>
+        <div class="card-sub">支持多个文件，或直接粘贴课件文字</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx,.doc,.docx,.txt" multiple onchange="handleFiles(this)">
+          <div class="upload-icon">📎</div>
+          <p><strong>点击上传</strong>或拖拽文件（可多选）</p>
+          <p style="margin-top:4px;font-size:12px;">PDF · PPT · Word · TXT</p>
+        </div>
+        <div id="fileList" style="margin-top:8px;"></div>
+        <div style="margin:16px 0;text-align:center;color:var(--muted);font-size:13px;">— 或直接粘贴课件内容 —</div>
+        <textarea id="courseContentText" placeholder="把课件文字、老师发的 reading 内容粘贴到这里..." rows="5" oninput="saveCourseData()"></textarea>
+        <div style="margin-top:16px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">我需要：</div>
+          <div class="output-options">
+            <button class="opt-btn selected" onclick="toggleOpt(this)">📖 预习重点</button>
+            <button class="opt-btn selected" onclick="toggleOpt(this)">🎯 核心概念</button>
+            <button class="opt-btn selected" onclick="toggleOpt(this)">⚠️ 难点解析</button>
+            <button class="opt-btn" onclick="toggleOpt(this)">🗂 Flashcard</button>
+            <button class="opt-btn" onclick="toggleOpt(this)">🌏 中文翻译</button>
+          </div>
+        </div>
+        <div class="lang-row">
+          <span>输出语言：</span>
+          <select id="outputLang">
+            <option value="中英双语（重点英文，解释中文）">🇨🇳🇬🇧 中英双语（推荐）</option>
+            <option value="中文">🇨🇳 纯中文</option>
+            <option value="英文">🇬🇧 纯英文</option>
+          </select>
+        </div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-primary" onclick="generateStudyMaterial()" id="genBtn">✨ 生成学习材料</button>
+        </div>
+        <div class="loading" id="genLoading"><div class="spinner"></div><span>AI 正在分析课件内容...</span></div>
+      </div>
+      <div class="result-box" id="prepResult">
+        <div class="result-header"><span>✨ AI 生成结果</span><button class="copy-btn" onclick="copyResult('prepResultContent')">复制</button></div>
+        <div class="result-content" id="prepResultContent"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-record">
+      <div class="card">
+        <div class="card-title"><div class="icon icon-orange">🎙</div>课堂录音</div>
+        <div class="card-sub">录音结束后自动转录，内容保存到这节课</div>
+        <div class="rec-status">
+          <div class="rec-dot" id="recDot"></div>
+          <div class="rec-timer" id="recTimer">00:00</div>
+          <div class="rec-label" id="recLabel">准备录音</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="recStartBtn" onclick="startRecording()">▶ 开始录音</button>
+          <button class="btn btn-danger" id="recStopBtn" onclick="stopRecording()" style="display:none">⏹ 停止录音</button>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">转录内容：</div>
+        <div class="transcript-box" id="transcriptBox"><span style="color:#b0ab9f;font-style:italic;">录音开始后内容会显示在这里...</span></div>
+        <div style="margin-top:16px;font-size:13px;color:var(--muted);">💡 录音结束后转录内容自动保存，去「课后复习」生成复习材料</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:15px;">手动粘贴转录</div>
+        <div class="card-sub">用其他工具转录后粘贴到这里</div>
+        <textarea id="manualTranscript" placeholder="粘贴老师讲课的转录内容..." rows="5" oninput="saveCourseData()"></textarea>
+        <div style="margin-top:12px;">
+          <button class="btn btn-primary" onclick="saveTranscript()">保存转录内容</button>
         </div>
       </div>
-      <div class="lang-row">
-        <span>输出语言：</span>
-        <select id="outputLang">
-          <option value="中英双语（重点英文，解释中文）">🇨🇳🇬🇧 中英双语（推荐）</option>
-          <option value="中文">🇨🇳 纯中文</option>
-          <option value="英文">🇬🇧 纯英文</option>
-        </select>
-      </div>
-      <div style="margin-top:20px;">
-        <button class="btn btn-primary" onclick="generateStudyMaterial()" id="genBtn">✨ 生成学习材料</button>
-      </div>
-      <div class="loading" id="genLoading"><div class="spinner"></div><span>AI 正在分析课件内容...</span></div>
     </div>
-    <div class="result-box" id="prepResult">
-      <div class="result-header"><span>✨ AI 生成结果</span><button class="copy-btn" onclick="copyResult('prepResultContent')">复制全文</button></div>
-      <div class="result-content" id="prepResultContent"></div>
-    </div>
-  </div>
 
-  <div class="panel" id="panel-record">
-    <div class="card">
-      <div class="card-title"><div class="icon icon-orange">🎙</div>课堂录音</div>
-      <div class="card-sub">开启录音后，课后可结合课件生成复习内容</div>
-      <div class="rec-status">
-        <div class="rec-dot" id="recDot"></div>
-        <div class="rec-timer" id="recTimer">00:00</div>
-        <div class="rec-label" id="recLabel">准备录音</div>
-      </div>
-      <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="recStartBtn" onclick="startRecording()">▶ 开始录音</button>
-        <button class="btn btn-danger" id="recStopBtn" onclick="stopRecording()" style="display:none">⏹ 停止录音</button>
-      </div>
-      <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">转录内容：</div>
-      <div class="transcript-box" id="transcriptBox"><span style="color:#b0ab9f; font-style:italic;">录音开始后显示转录内容...</span></div>
-      <div style="margin-top:16px; font-size:13px; color:var(--muted);">💡 录音结束后去「课后复习」生成复习材料</div>
-    </div>
-    <div class="card">
-      <div class="card-title" style="font-size:15px;">手动粘贴转录内容</div>
-      <div class="card-sub">用其他工具转录后粘贴到这里</div>
-      <textarea id="manualTranscript" placeholder="粘贴老师讲课的转录内容..." rows="5"></textarea>
-      <div style="margin-top:12px;"><button class="btn btn-primary" onclick="saveTranscript()">保存转录内容</button></div>
-    </div>
-  </div>
-
-  <div class="panel" id="panel-review">
-    <div class="card">
-      <div class="card-title"><div class="icon icon-green">🔁</div>课后复习 & 聊天</div>
-      <div class="card-sub">AI 结合课件和录音内容来回答问题</div>
-      <div style="margin-bottom:20px;">
-        <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">一键生成：</div>
-        <div class="output-options">
-          <button class="opt-btn" onclick="quickReview('summary')">📋 课程总结</button>
-          <button class="opt-btn" onclick="quickReview('flashcards')">🗂 Flashcard</button>
-          <button class="opt-btn" onclick="quickReview('questions')">❓ 练习题</button>
-          <button class="opt-btn" onclick="quickReview('mindmap')">🗺 知识框架</button>
+    <div class="panel" id="panel-review">
+      <div class="card">
+        <div class="card-title"><div class="icon icon-green">🔁</div>课后复习</div>
+        <div class="card-sub">AI 结合课件和录音内容生成复习材料</div>
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">一键生成：</div>
+          <div class="output-options">
+            <button class="opt-btn" onclick="quickReview('summary')">📋 课程总结</button>
+            <button class="opt-btn" onclick="quickReview('flashcards')">🗂 Flashcard</button>
+            <button class="opt-btn" onclick="quickReview('questions')">❓ 练习题</button>
+            <button class="opt-btn" onclick="quickReview('mindmap')">🗺 知识框架</button>
+          </div>
+        </div>
+        <div class="loading" id="reviewLoading"><div class="spinner"></div><span>AI 正在整理...</span></div>
+        <div id="flashcardArea" style="display:none;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">点击卡片查看答案：</div>
+          <div class="flashcard-grid" id="flashcardGrid"></div>
+        </div>
+        <div class="result-box" id="reviewResult" style="margin-top:0;">
+          <div class="result-header"><span id="reviewResultTitle">复习内容</span><button class="copy-btn" onclick="copyResult('reviewResultContent')">复制</button></div>
+          <div class="result-content" id="reviewResultContent"></div>
         </div>
       </div>
-      <div class="loading" id="reviewLoading"><div class="spinner"></div><span>AI 正在整理复习内容...</span></div>
-      <div id="flashcardArea" style="display:none;">
-        <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">点击卡片查看答案：</div>
-        <div class="flashcard-grid" id="flashcardGrid"></div>
-      </div>
-      <div class="result-box" id="reviewResult" style="margin-top:0;">
-        <div class="result-header"><span id="reviewResultTitle">复习内容</span><button class="copy-btn" onclick="copyResult('reviewResultContent')">复制</button></div>
-        <div class="result-content" id="reviewResultContent"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title"><div class="icon icon-green">💬</div>问 AI</div>
-      <div class="card-sub">不懂的地方直接问，AI 根据课件内容回答</div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
-      </div>
-      <div class="chat-input-row">
-        <input type="text" id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter')sendChat()"/>
-        <button class="btn btn-primary" onclick="sendChat()">发送</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="panel-notes">
-    <div class="card">
-      <div class="card-title"><div class="icon icon-gold">📝</div>我的课堂笔记</div>
-      <div class="card-sub">笔记自动保存在浏览器里</div>
-      <div class="notes-toolbar">
-        <button class="tool-btn" onclick="insertNote('**重点：** ')">📌 重点</button>
-        <button class="tool-btn" onclick="insertNote('❓ 问题：')">❓ 问题</button>
-        <button class="tool-btn" onclick="insertNote('💡 理解：')">💡 理解</button>
-        <button class="tool-btn" onclick="insertNote('\n---\n')">— 分割线</button>
-        <button class="tool-btn" onclick="clearNotes()" style="margin-left:auto; color:#c8553d;">清空</button>
-      </div>
-      <textarea class="notes-area" id="notesArea" placeholder="开始记笔记..."></textarea>
-      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
-        <button class="btn btn-primary" onclick="aiPolishNotes()">✨ AI 整理笔记</button>
-        <span style="font-size:12px; color:var(--muted);" id="noteSaveStatus">自动保存</span>
-      </div>
-      <div class="loading" id="notesLoading"><div class="spinner"></div><span>AI 正在整理笔记...</span></div>
-      <div class="result-box" id="notesResult">
-        <div class="result-header"><span>✨ AI 整理后的笔记</span><button class="copy-btn" onclick="copyResult('notesResultContent')">复制</button></div>
-        <div class="result-content" id="notesResultContent"></div>
+      <div class="card">
+        <div class="card-title"><div class="icon icon-green">💬</div>问 AI</div>
+        <div class="card-sub">根据这节课的内容回答你的问题</div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-primary" onclick="sendChat()">发送</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
+
+<div class="float-notes-panel" id="floatNotesPanel">
+  <div class="float-notes-header">
+    <h4 id="floatNotesTitle">📝 课堂笔记</h4>
+    <button class="float-notes-close" onclick="toggleFloatNotes()">✕</button>
+  </div>
+  <div class="float-notes-toolbar">
+    <button class="float-tool-btn" onclick="insertFloatNote('📌 重点：')">📌</button>
+    <button class="float-tool-btn" onclick="insertFloatNote('❓ 问题：')">❓</button>
+    <button class="float-tool-btn" onclick="insertFloatNote('💡 理解：')">💡</button>
+    <button class="float-tool-btn" onclick="insertFloatNote('\n---\n')">—</button>
+    <button class="float-tool-btn" onclick="aiPolishNotes()">✨ AI整理</button>
+    <button class="float-tool-btn" onclick="clearFloatNotes()" style="color:var(--accent);">清空</button>
+  </div>
+  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+    <textarea class="float-notes-textarea" id="floatNotesArea" placeholder="随时记笔记..." oninput="saveFloatNotes()"></textarea>
+  </div>
+  <div class="float-notes-footer">
+    <span id="notesSaveStatus">自动保存</span>
+    <span id="notesWordCount">0 字</span>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div><script>
-let courseText = '';
+let courses = JSON.parse(localStorage.getItem('sm_courses') || '[]');
+let currentCourseId = localStorage.getItem('sm_currentCourse') || null;
+let uploadedFiles = [];
 let transcriptText = '';
 let mediaRecorder = null;
 let recInterval = null;
@@ -255,106 +356,240 @@ let recSeconds = 0;
 let audioChunks = [];
 
 window.onload = () => {
-  const saved = localStorage.getItem('sm_notes');
-  if (saved) document.getElementById('notesArea').value = saved;
-  document.getElementById('notesArea').addEventListener('input', () => {
-    localStorage.setItem('sm_notes', document.getElementById('notesArea').value);
-    document.getElementById('noteSaveStatus').textContent = '已保存 ✓';
-    setTimeout(() => document.getElementById('noteSaveStatus').textContent = '自动保存', 2000);
-  });
+  renderCourseList();
+  if (currentCourseId && getCourse(currentCourseId)) {
+    loadCourse(currentCourseId);
+  } else if (courses.length > 0) {
+    loadCourse(courses[0].id);
+  } else {
+    showEmptyState();
+  }
   const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleFiles({ files: e.dataTransfer.files });
-  });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
 };
 
-async function callClaude(messages, systemPrompt) {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, system: systemPrompt, max_tokens: 2000 })
-  });
-  if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
-  const data = await res.json();
-  return data.content[0].text;
+function getCourse(id) { return courses.find(c => c.id === id); }
+function saveCourses() { localStorage.setItem('sm_courses', JSON.stringify(courses)); }
+
+function showEmptyState() {
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('courseContent').style.display = 'none';
+  document.getElementById('headerCourseName').textContent = '选择课程';
+  currentCourseId = null;
+}
+
+function showNewCourseModal() {
+  document.getElementById('newCourseModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCourseName').focus(), 100);
+}
+
+function closeNewCourseModal() {
+  document.getElementById('newCourseModal').classList.remove('open');
+  document.getElementById('newCourseName').value = '';
+}
+
+function createCourse() {
+  const name = document.getElementById('newCourseName').value.trim();
+  if (!name) { showToast('请输入课程名称'); return; }
+  const course = { id: 'course_' + Date.now(), name, createdAt: new Date().toLocaleDateString('zh-CN'), courseText: '', transcript: '', notes: '', prepResult: '' };
+  courses.unshift(course);
+  saveCourses();
+  closeNewCourseModal();
+  renderCourseList();
+  loadCourse(course.id);
+  showToast('课程已创建 ✓');
+}
+
+function loadCourse(id) {
+  const course = getCourse(id);
+  if (!course) return;
+  currentCourseId = id;
+  localStorage.setItem('sm_currentCourse', id);
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('courseContent').style.display = 'block';
+  document.getElementById('headerCourseName').textContent = course.name;
+  document.getElementById('bannerCourseName').textContent = course.name;
+  document.getElementById('bannerCourseDate').textContent = '创建于 ' + course.createdAt;
+  document.getElementById('courseContentText').value = course.courseText || '';
+  document.getElementById('manualTranscript').value = course.transcript || '';
+  document.getElementById('floatNotesArea').value = course.notes || '';
+  transcriptText = course.transcript || '';
+  uploadedFiles = [];
+  renderFileList();
+  updateNotesWordCount();
+  document.getElementById('prepResult').style.display = 'none';
+  document.getElementById('reviewResult').style.display = 'none';
+  document.getElementById('flashcardArea').style.display = 'none';
+  if (course.prepResult) {
+    document.getElementById('prepResultContent').textContent = course.prepResult;
+    document.getElementById('prepResult').style.display = 'block';
+  }
+  document.getElementById('floatNotesTitle').textContent = '📝 ' + course.name;
+  document.getElementById('chatMessages').innerHTML = '<div class="msg ai"><div class="msg-label">StudyMate AI</div>已加载课程「' + course.name + '」，有什么问题都可以问我 👋</div>';
+  renderCourseList();
+  closeSidebar();
+  switchTab('prep');
+}
+
+function saveCourseData() {
+  if (!currentCourseId) return;
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  course.courseText = document.getElementById('courseContentText').value;
+  course.transcript = document.getElementById('manualTranscript').value;
+  saveCourses();
+}
+
+function renameCourse() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  const name = prompt('新的课程名称：', course.name);
+  if (!name || !name.trim()) return;
+  course.name = name.trim();
+  saveCourses();
+  document.getElementById('headerCourseName').textContent = course.name;
+  document.getElementById('bannerCourseName').textContent = course.name;
+  document.getElementById('floatNotesTitle').textContent = '📝 ' + course.name;
+  renderCourseList();
+  showToast('已重命名 ✓');
+}
+
+function deleteCourse() {
+  if (!confirm('确定删除这节课吗？所有内容将无法恢复。')) return;
+  courses = courses.filter(c => c.id !== currentCourseId);
+  saveCourses();
+  renderCourseList();
+  if (courses.length > 0) loadCourse(courses[0].id);
+  else showEmptyState();
+  showToast('课程已删除');
+}
+
+function deleteCoursById(id) {
+  if (!confirm('删除这节课？')) return;
+  courses = courses.filter(c => c.id !== id);
+  saveCourses();
+  renderCourseList();
+  if (id === currentCourseId) { if (courses.length > 0) loadCourse(courses[0].id); else showEmptyState(); }
+}
+
+function renderCourseList() {
+  const list = document.getElementById('courseList');
+  if (!courses.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">还没有课程</div>'; return; }
+  list.innerHTML = courses.map(c => `
+    <div class="course-item ${c.id === currentCourseId ? 'active' : ''}" onclick="loadCourse('${c.id}')">
+      <div class="course-item-icon">📚</div>
+      <div class="course-item-info">
+        <div class="course-item-name">${c.name}</div>
+        <div class="course-item-sub">${c.createdAt}</div>
+      </div>
+      <button class="course-item-del" onclick="event.stopPropagation();deleteCoursById('${c.id}')">×</button>
+    </div>`).join('');
+}
+
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+function toggleFloatNotes() { document.getElementById('floatNotesPanel').classList.toggle('open'); }
+
+function saveFloatNotes() {
+  if (!currentCourseId) return;
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  course.notes = document.getElementById('floatNotesArea').value;
+  saveCourses();
+  document.getElementById('notesSaveStatus').textContent = '已保存 ✓';
+  setTimeout(() => document.getElementById('notesSaveStatus').textContent = '自动保存', 2000);
+  updateNotesWordCount();
+}
+
+function updateNotesWordCount() { document.getElementById('notesWordCount').textContent = document.getElementById('floatNotesArea').value.length + ' 字'; }
+
+function insertFloatNote(text) {
+  const ta = document.getElementById('floatNotesArea');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0, pos) + text + ta.value.slice(pos);
+  ta.focus(); ta.selectionStart = ta.selectionEnd = pos + text.length;
+  saveFloatNotes();
+}
+
+function clearFloatNotes() { if (!confirm('清空这节课的笔记？')) return; document.getElementById('floatNotesArea').value = ''; saveFloatNotes(); }
+
+async function aiPolishNotes() {
+  const notes = document.getElementById('floatNotesArea').value.trim();
+  if (!notes) { showToast('请先写一些笔记'); return; }
+  showToast('AI 正在整理笔记...');
+  try {
+    const result = await callClaude([{ role: 'user', content: '请帮我整理和完善以下课堂笔记，结构清晰：\n\n' + notes }], '你是留学生学习助手，帮助整理课堂笔记，用中英双语，结构清晰。');
+    document.getElementById('floatNotesArea').value = result;
+    saveFloatNotes();
+    showToast('笔记整理完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['prep','record','review','notes'][i] === name);
-  });
+  document.querySelectorAll('.tab').forEach((t, i) => { t.classList.toggle('active', ['prep','record','review'][i] === name); });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
 }
 
-let uploadedFiles = [];
 function handleFiles(input) {
+  if (!currentCourseId) { showToast('请先选择或创建一个课程'); return; }
   const files = Array.from(input.files);
   files.forEach(f => { if (!uploadedFiles.find(x => x.name === f.name)) uploadedFiles.push(f); });
   renderFileList(); readAllFiles();
 }
+
 function renderFileList() {
-  const list = document.getElementById('fileList');
-  if (!uploadedFiles.length) { list.innerHTML = ''; return; }
-  list.innerHTML = uploadedFiles.map((f, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--cream);border-radius:8px;font-size:13px;">
-      <span>📄</span><span style="flex:1;color:var(--accent2);">${f.name}</span>
+  document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <span>📄 ${f.name}</span>
       <span style="color:var(--muted);font-size:12px;">${(f.size/1024).toFixed(0)} KB</span>
-      <button onclick="removeFile(${i})" style="border:none;background:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 2px;">×</button>
+      <button onclick="removeFile(${i})">×</button>
     </div>`).join('');
 }
+
 function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); readAllFiles(); }
-function readAllFiles() {   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));   const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('
-');    if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; courseText = ''; return; }    let combined = otherLabels ? otherLabels + '
 
-' : '';   let pending = textFiles.length + pdfFiles.length;    if (pending === 0) {     courseText = combined.trim();     showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`);     return;   }    const tryFinish = () => {     pending--;     if (pending === 0) {       courseText = combined.trim();       document.getElementById('courseContent').value = courseText;       showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`);     }   };    textFiles.forEach(file => {     const reader = new FileReader();     reader.onload = e => {       combined += `
-
-【${file.name}】
-` + e.target.result;       tryFinish();     };     reader.readAsText(file);   });    pdfFiles.forEach(file => {     const reader = new FileReader();     reader.onload = async e => {       const base64 = e.target.result.split(',')[1];       try {         document.getElementById('courseContent').placeholder = `正在解析 ${file.name}...`;         const res = await fetch('/api/parse', {           method: 'POST',           headers: { 'Content-Type': 'application/json' },           body: JSON.stringify({ fileBase64: base64, mimeType: 'application/pdf' })         });         const data = await res.json();         if (data.text) {           combined += `
-
-【${file.name}】
-` + data.text;           showToast(`${file.name} 解析成功 ✓`);         } else {           combined += `
-
-[${file.name} 解析失败，请手动粘贴内容]`;           showToast(`${file.name} 解析失败，请手动粘贴`);         }       } catch(e) {         combined += `
-
-[${file.name} 解析出错]`;       }       tryFinish();     };     reader.readAsDataURL(file);   }); } {   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));   const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('
-');    if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; courseText = ''; return; }    let combined = otherLabels ? otherLabels + '
-
-' : '';   let pending = textFiles.length + pdfFiles.length;    if (pending === 0) {     courseText = combined.trim();     showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`);     return;   }    const tryFinish = () => {     pending--;     if (pending === 0) {       courseText = combined.trim();       document.getElementById('courseContent').value = courseText;       showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`);     }   };    textFiles.forEach(file => {     const reader = new FileReader();     reader.onload = e => {       combined += `
-
-【${file.name}】
-` + e.target.result;       tryFinish();     };     reader.readAsText(file);   });    pdfFiles.forEach(file => {     const reader = new FileReader();     reader.onload = async e => {       const base64 = e.target.result.split(',')[1];       try {         document.getElementById('courseContent').placeholder = `正在解析 ${file.name}...`;         const res = await fetch('/api/parse', {           method: 'POST',           headers: { 'Content-Type': 'application/json' },           body: JSON.stringify({ fileBase64: base64, mimeType: 'application/pdf' })         });         const data = await res.json();         if (data.text) {           combined += `
-
-【${file.name}】
-` + data.text;           showToast(`${file.name} 解析成功 ✓`);         } else {           combined += `
-
-[${file.name} 解析失败，请手动粘贴内容]`;           showToast(`${file.name} 解析失败，请手动粘贴`);         }       } catch(e) {         combined += `
-
-[${file.name} 解析出错]`;       }       tryFinish();     };     reader.readAsDataURL(file);   }); } {
+function readAllFiles() {
   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));
-  const otherLabels = uploadedFiles.filter(f => !f.name.endsWith('.txt')).map(f => `[已上传：${f.name}]`).join('\n');
-  if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; return; }
-  if (!textFiles.length) { courseText = otherLabels; showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`); return; }
-  let pending = textFiles.length;
+  const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));
+  const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));
+  const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('\n');
+  if (!uploadedFiles.length) { document.getElementById('courseContentText').value = ''; saveCourseData(); return; }
   let combined = otherLabels ? otherLabels + '\n\n' : '';
-  textFiles.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      combined += `\n\n【${file.name}】\n` + e.target.result;
-      if (--pending === 0) { courseText = combined.trim(); document.getElementById('courseContent').value = courseText; showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`); }
+  let pending = textFiles.length + pdfFiles.length;
+  if (pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`); return; }
+  const tryFinish = () => { if (--pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`); } };
+  textFiles.forEach(file => { const r = new FileReader(); r.onload = e => { combined += `\n\n【${file.name}】\n` + e.target.result; tryFinish(); }; r.readAsText(file); });
+  pdfFiles.forEach(file => {
+    const r = new FileReader();
+    r.onload = async e => {
+      const base64 = e.target.result.split(',')[1];
+      try {
+        const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
+        const data = await res.json();
+        combined += data.text ? `\n\n【${file.name}】\n` + data.text : `\n\n[${file.name} 解析失败，请手动粘贴]`;
+        if (data.text) showToast(`${file.name} 解析成功 ✓`);
+      } catch(e) { combined += `\n\n[${file.name} 解析出错]`; }
+      tryFinish();
     };
-    reader.readAsText(file);
+    r.readAsDataURL(file);
   });
 }
 
 function toggleOpt(btn) { btn.classList.toggle('selected'); }
 function getSelectedOpts() { return [...document.querySelectorAll('#panel-prep .opt-btn.selected')].map(b => b.textContent.trim()); }
 
+async function callClaude(messages, systemPrompt) {
+  const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages, system:systemPrompt, max_tokens:2000}) });
+  if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
+  return (await res.json()).content[0].text;
+}
+
 async function generateStudyMaterial() {
-  const content = document.getElementById('courseContent').value.trim() || courseText;
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
+  const content = document.getElementById('courseContentText').value.trim();
   if (!content) { showToast('请先上传课件或粘贴内容'); return; }
   const opts = getSelectedOpts();
   const lang = document.getElementById('outputLang').value;
@@ -363,18 +598,18 @@ async function generateStudyMaterial() {
   document.getElementById('genLoading').style.display = 'flex';
   document.getElementById('prepResult').style.display = 'none';
   try {
-    const result = await callClaude(
-      [{ role: 'user', content: `请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念和难点，专业术语保留英文并用中文解释。` }],
-      `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料，使用Markdown格式。`
-    );
+    const result = await callClaude([{ role:'user', content:`请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念，专业术语保留英文并用中文解释。` }], `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料。`);
     document.getElementById('prepResultContent').textContent = result;
     document.getElementById('prepResult').style.display = 'block';
+    const course = getCourse(currentCourseId);
+    if (course) { course.prepResult = result; saveCourses(); }
     showToast('生成完成 ✓');
   } catch(e) { showToast('错误：' + e.message); }
   finally { btn.disabled = false; document.getElementById('genLoading').style.display = 'none'; }
 }
 
 async function startRecording() {
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder = new MediaRecorder(stream);
@@ -387,175 +622,104 @@ async function startRecording() {
     document.getElementById('recStopBtn').style.display = 'inline-flex';
     document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">🔴 录音中...</span>';
     recSeconds = 0;
-    recInterval = setInterval(() => {
-      recSeconds++;
-      const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
-      const s = String(recSeconds%60).padStart(2,'0');
-      document.getElementById('recTimer').textContent = m + ':' + s;
-    }, 1000);
+    recInterval = setInterval(() => { recSeconds++; const m=String(Math.floor(recSeconds/60)).padStart(2,'0'); const s=String(recSeconds%60).padStart(2,'0'); document.getElementById('recTimer').textContent=m+':'+s; }, 1000);
   } catch(e) { showToast('无法访问麦克风：' + e.message); }
 }
 
 function stopRecording() {
-  if (window._recognition) { window._recognition.stop(); }
   clearInterval(recInterval);
   document.getElementById('recDot').classList.remove('recording');
   document.getElementById('recLabel').textContent = '转录中...';
   document.getElementById('recStartBtn').style.display = 'inline-flex';
   document.getElementById('recStopBtn').style.display = 'none';
-
   if (mediaRecorder) {
     mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(t => t.stop());
-
     mediaRecorder.onstop = async () => {
-      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在自动转录录音，请稍候...</span>';
-
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在自动转录...</span>';
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
       const reader = new FileReader();
       reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
         try {
-          const res = await fetch('/api/transcribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ audioBase64: base64, mimeType: 'audio/webm' })
-          });
+          const res = await fetch('/api/transcribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({audioBase64:reader.result.split(',')[1], mimeType:'audio/webm'}) });
           const data = await res.json();
           if (data.transcript) {
             transcriptText = data.transcript;
             document.getElementById('manualTranscript').value = transcriptText;
-            document.getElementById('transcriptBox').innerHTML =
-              '<span style="color:var(--accent2)">✓ 转录完成！已自动保存，去「课后复习」使用</span><br><br>' +
-              '<span style="color:var(--ink); font-size:13px;">' + transcriptText.substring(0, 200) + (transcriptText.length > 200 ? '...' : '') + '</span>';
+            saveCourseData();
+            document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录完成，已保存到本课程</span><br><br><span style="font-size:13px;">' + transcriptText.substring(0,200) + (transcriptText.length>200?'...':'') + '</span>';
             document.getElementById('recLabel').textContent = '转录完成';
-            showToast('转录完成 ✓ 去课后复习生成复习材料');
-          } else {
-            throw new Error(data.error || '转录失败');
-          }
+            showToast('转录完成 ✓ 去课后复习生成材料');
+          } else throw new Error(data.error || '转录失败');
         } catch(e) {
-          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span><br><br><span style="color:var(--muted);font-size:13px;">请手动粘贴到下方输入框</span>';
+          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span><br><br><span style="color:var(--muted);font-size:13px;">请手动粘贴到下方</span>';
           document.getElementById('recLabel').textContent = '转录失败';
-          showToast('转录失败，请手动粘贴');
         }
       };
-      reader.readAsDataURL(audioBlob);
+      reader.readAsDataURL(blob);
     };
   }
 }
+
 function saveTranscript() {
   transcriptText = document.getElementById('manualTranscript').value.trim();
   if (!transcriptText) { showToast('请先粘贴转录内容'); return; }
+  saveCourseData();
+  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录已保存，去「课后复习」使用</span>';
   showToast('转录内容已保存 ✓');
 }
 
 async function quickReview(type) {
-  const content = document.getElementById('courseContent').value.trim() || courseText;
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
+  const content = document.getElementById('courseContentText').value.trim();
   const transcript = transcriptText || document.getElementById('manualTranscript').value.trim();
   if (!content && !transcript) { showToast('请先上传课件或保存录音转录'); return; }
-  const types = {
-    summary: { label: '课程总结', prompt: '生成详细课程总结' },
-    flashcards: { label: 'Flashcard', prompt: '生成8-12张Flashcard，格式：【正面】英文术语\n【背面】中文解释+例子' },
-    questions: { label: '练习题', prompt: '生成5道练习题附答案' },
-    mindmap: { label: '知识框架', prompt: '生成文字版知识框架' }
-  };
+  const types = { summary:{label:'课程总结',prompt:'生成详细课程总结'}, flashcards:{label:'Flashcard',prompt:'生成8-12张Flashcard，格式：【正面】英文术语\n【背面】中文解释+例子'}, questions:{label:'练习题',prompt:'生成5道练习题附答案'}, mindmap:{label:'知识框架',prompt:'生成文字版知识框架'} };
   document.getElementById('reviewLoading').style.display = 'flex';
   document.getElementById('reviewResult').style.display = 'none';
   document.getElementById('flashcardArea').style.display = 'none';
-  const ctx = [content && `【课件】\n${content}`, transcript && `【录音】\n${transcript}`].filter(Boolean).join('\n\n');
+  const ctx = [content&&`【课件】\n${content}`, transcript&&`【录音】\n${transcript}`].filter(Boolean).join('\n\n');
   try {
-    const result = await callClaude([{ role: 'user', content: `${types[type].prompt}\n\n${ctx}` }], '你是留学生学习助手，用中英双语生成学习材料。');
-    if (type === 'flashcards') { renderFlashcards(result); }
-    else {
-      document.getElementById('reviewResultTitle').textContent = types[type].label;
-      document.getElementById('reviewResultContent').textContent = result;
-      document.getElementById('reviewResult').style.display = 'block';
-    }
+    const result = await callClaude([{role:'user',content:types[type].prompt+'\n\n'+ctx}], '你是留学生学习助手，用中英双语生成学习材料。');
+    if (type==='flashcards') renderFlashcards(result);
+    else { document.getElementById('reviewResultTitle').textContent=types[type].label; document.getElementById('reviewResultContent').textContent=result; document.getElementById('reviewResult').style.display='block'; }
     showToast('生成完成 ✓');
   } catch(e) { showToast('错误：' + e.message); }
   finally { document.getElementById('reviewLoading').style.display = 'none'; }
 }
 
 function renderFlashcards(text) {
-  const cards = [];
-  const lines = text.split('\n');
-  let current = {};
+  const cards=[]; const lines=text.split('\n'); let current={};
   for (const line of lines) {
-    const l = line.trim();
-    if (l.match(/^【正面】|^正面：/)) { if (current.front) cards.push(current); current = { front: l.replace(/^【正面】|^正面：/, '').trim() }; }
-    else if (l.match(/^【背面】|^背面：/)) { current.back = l.replace(/^【背面】|^背面：/, '').trim(); }
-    else if (current.back && l) current.back += ' ' + l;
+    const l=line.trim();
+    if (l.match(/^【正面】|^正面：/)) { if(current.front) cards.push(current); current={front:l.replace(/^【正面】|^正面：/,'').trim()}; }
+    else if (l.match(/^【背面】|^背面：/)) { current.back=l.replace(/^【背面】|^背面：/,'').trim(); }
+    else if (current.back&&l) current.back+=' '+l;
   }
   if (current.front) cards.push(current);
-  if (!cards.length) { document.getElementById('reviewResultTitle').textContent = 'Flashcard'; document.getElementById('reviewResultContent').textContent = text; document.getElementById('reviewResult').style.display = 'block'; return; }
-  document.getElementById('flashcardGrid').innerHTML = cards.map(c => `
-    <div class="flashcard" onclick="this.classList.toggle('flipped')">
-      <div class="front">${c.front}</div>
-      <div class="back">${c.back||''}</div>
-      <div class="fc-hint">点击翻转</div>
-    </div>`).join('');
-  document.getElementById('flashcardArea').style.display = 'block';
+  if (!cards.length) { document.getElementById('reviewResultTitle').textContent='Flashcard'; document.getElementById('reviewResultContent').textContent=text; document.getElementById('reviewResult').style.display='block'; return; }
+  document.getElementById('flashcardGrid').innerHTML = cards.map(c=>`<div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="front">${c.front}</div><div class="back">${c.back||''}</div><div class="fc-hint">点击翻转</div></div>`).join('');
+  document.getElementById('flashcardArea').style.display='block';
 }
 
 async function sendChat() {
-  const input = document.getElementById('chatInput');
-  const q = input.value.trim();
-  if (!q) return;
-  input.value = '';
-  addMsg('user', q);
-  const content = document.getElementById('courseContent').value.trim() || courseText;
-  const transcript = transcriptText || document.getElementById('manualTranscript').value.trim();
-  const ctx = ['你是留学生学习助手，根据以下课程材料回答问题：', content && `【课件】${content.substring(0,1500)}`, transcript && `【录音】${transcript.substring(0,1000)}`].filter(Boolean).join('\n');
-  try {
-    const result = await callClaude([{ role: 'user', content: q }], ctx + '\n\n用中英双语回答，专业术语保留英文并解释。');
-    addMsg('ai', result);
-  } catch(e) { addMsg('ai', '抱歉，出错了：' + e.message); }
+  const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q) return; input.value=''; addMsg('user',q);
+  const content=document.getElementById('courseContentText').value.trim();
+  const transcript=transcriptText||document.getElementById('manualTranscript').value.trim();
+  const ctx=['你是留学生学习助手，根据以下课程材料回答问题：', content&&`【课件】${content.substring(0,1500)}`, transcript&&`【录音】${transcript.substring(0,1000)}`].filter(Boolean).join('\n');
+  try { const result=await callClaude([{role:'user',content:q}], ctx+'\n\n用中英双语回答，专业术语保留英文并解释。'); addMsg('ai',result); }
+  catch(e) { addMsg('ai','抱歉，出错了：'+e.message); }
 }
 
-function addMsg(role, text) {
-  const box = document.getElementById('chatMessages');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  div.innerHTML = role === 'ai' ? '<div class="msg-label">StudyMate AI</div>' + text.replace(/\n/g,'<br>') : text;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+function addMsg(role,text) {
+  const box=document.getElementById('chatMessages'); const div=document.createElement('div'); div.className='msg '+role;
+  div.innerHTML=role==='ai'?'<div class="msg-label">StudyMate AI</div>'+text.replace(/\n/g,'<br>'):text;
+  box.appendChild(div); box.scrollTop=box.scrollHeight;
 }
 
-function insertNote(text) {
-  const ta = document.getElementById('notesArea');
-  const pos = ta.selectionStart;
-  ta.value = ta.value.slice(0, pos) + text + ta.value.slice(pos);
-  ta.focus(); ta.selectionStart = ta.selectionEnd = pos + text.length;
-  localStorage.setItem('sm_notes', ta.value);
-}
+function copyResult(id) { navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>showToast('已复制 ✓')).catch(()=>showToast('请手动复制')); }
 
-function clearNotes() {
-  if (confirm('确定清空所有笔记吗？')) { document.getElementById('notesArea').value = ''; localStorage.removeItem('sm_notes'); showToast('笔记已清空'); }
-}
-
-async function aiPolishNotes() {
-  const notes = document.getElementById('notesArea').value.trim();
-  if (!notes) { showToast('请先写一些笔记'); return; }
-  document.getElementById('notesLoading').style.display = 'flex';
-  document.getElementById('notesResult').style.display = 'none';
-  try {
-    const result = await callClaude([{ role: 'user', content: `请帮我整理和完善以下课堂笔记：\n\n${notes}` }], '你是留学生学习助手，帮助整理课堂笔记，用中英双语，结构清晰。');
-    document.getElementById('notesResultContent').textContent = result;
-    document.getElementById('notesResult').style.display = 'block';
-    showToast('笔记整理完成 ✓');
-  } catch(e) { showToast('错误：' + e.message); }
-  finally { document.getElementById('notesLoading').style.display = 'none'; }
-}
-
-function copyResult(id) {
-  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => showToast('已复制 ✓')).catch(() => showToast('请手动复制'));
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 </script>
 </body>
 </html>
