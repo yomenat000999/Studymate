@@ -556,7 +556,7 @@ function renderFileList() {
 
 function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); readAllFiles(); }
 
-function readAllFiles() {
+async function readAllFiles() {
   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));
   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));
   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));
