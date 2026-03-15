@@ -693,7 +693,7 @@ async function quickReview(type) {
   const content = document.getElementById('courseContentText').value.trim();
   const transcript = transcriptText || document.getElementById('manualTranscript').value.trim();
   if (!content && !transcript) { showToast('请先上传课件或保存录音转录'); return; }
-  const types = { summary:{label:'课程总结',prompt:'生成详细课程总结'}, flashcards:{label:'Flashcard',prompt:'生成8-12张Flashcard，格式：【正面】英文术语\n【背面】中文解释+例子'}, questions:{label:'练习题',prompt:'生成5道练习题附答案'}, mindmap:{label:'知识框架',prompt:'生成文字版知识框架'} };
+  const types = { summary:{label:'课程总结',prompt:'summary:{label:'课程总结', prompt:'请生成这节课的详细总结'},'}, flashcards:{label:'Flashcard',prompt:'生成8-12张Flashcard，格式：【正面】英文术语\n【背面】中文解释+例子'}, questions:{label:'练习题',prompt:'生成5道练习题附答案'}, mindmap:{label:'知识框架',prompt:'生成文字版知识框架'} };
   document.getElementById('reviewLoading').style.display = 'flex';
   document.getElementById('reviewResult').style.display = 'none';
   document.getElementById('flashcardArea').style.display = 'none';
