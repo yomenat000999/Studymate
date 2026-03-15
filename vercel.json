@@ -1,8 +1,9 @@
 {
+  "version": 2,
   "functions": {
-    "api/chat.js": { "memory": 256 },
-    "api/parse.js": { "memory": 256 },
-    "api/transcribe.js": { "memory": 256 }
+    "api/chat.js": { "memory": 256, "maxDuration": 30 },
+    "api/parse.js": { "memory": 256, "maxDuration": 30 },
+    "api/transcribe.js": { "memory": 256, "maxDuration": 60 }
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
