@@ -16,6 +16,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 4000,
+        system: '你是一个文字提取工具。只输出文件中的原始文字内容，不要添加任何解释、评论或额外内容。',
         messages: [{
           role: 'user',
           content: [
@@ -23,21 +24,29 @@ export default async function handler(req, res) {
               type: 'document',
               source: {
                 type: 'base64',
-                media_type: mimeType || 'application/pdf',
+                media_type: 'application/pdf',
                 data: fileBase64
               }
             },
             {
               type: 'text',
-              text: '请提取这个文件中的所有文字内容，保持原有结构，不要添加任何解释。'
+              text: '提取全部文字内容。'
             }
           ]
         }]
       })
     });
+
+    if (!response.ok) {
+      const err = await response.json();
+      return res.status(500).json({ error: err.error?.message || '解析失败' });
+    }
+
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || '解析失败');
-    return res.status(200).json({ text: data.content[0].text });
+    const text = data.content?.[0]?.text || '';
+    if (!text) return res.status(500).json({ error: '未能提取到文字' });
+    return res.status(200).json({ text });
+
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
