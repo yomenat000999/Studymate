@@ -167,7 +167,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   <div class="modal">
     <h2>新建课程</h2>
     <p>给这节课起个名字，比如「Week 3 - Marketing策略」</p>
-    <input type="text" id="newCourseName" placeholder="课程名称..." maxlength="50" onkeydown="if(event.key==='Enter')createCourse()"/>
+   <input type="text" id="newCourseName" placeholder="课程名称..." maxlength="50" onkeydown="if(event.key==='Enter')createCourse()" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate/>
     <div class="modal-btns">
       <button class="btn btn-primary" onclick="createCourse()">创建</button>
       <button class="btn" style="background:var(--cream);color:var(--ink);" onclick="closeNewCourseModal()">取消</button>
