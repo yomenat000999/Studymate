@@ -377,10 +377,17 @@ function stopRecording() {
   document.getElementById('recLabel').textContent = '录音结束';
   document.getElementById('recStartBtn').style.display = 'inline-flex';
   document.getElementById('recStopBtn').style.display = 'none';
-  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 录音完成（' + document.getElementById('recTimer').textContent + '）</span>';
+  const timeStr = document.getElementById('recTimer').textContent;
+  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 录音完成（' + timeStr + '）</span><br><br><span style="color:var(--muted);font-size:13px;">请将录音转文字后粘贴到下方输入框，点保存后即可在课后复习使用。</span>';
   showToast('录音结束，请转录后粘贴到下方');
 }
 
+function saveTranscript() {
+  transcriptText = document.getElementById('manualTranscript').value.trim();
+  if (!transcriptText) { showToast('请先粘贴转录内容'); return; }
+  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录内容已保存，去「课后复习」生成复习材料</span>';
+  showToast('转录内容已保存 ✓ 现在可以去课后复习了');
+}
 function saveTranscript() {
   transcriptText = document.getElementById('manualTranscript').value.trim();
   if (!transcriptText) { showToast('请先粘贴转录内容'); return; }
