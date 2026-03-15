@@ -19,8 +19,18 @@ export default async function handler(req, res) {
         messages: [{
           role: 'user',
           content: [
-            { type: 'document', source: { type: 'base64', media_type: mimeType || 'application/pdf', data: fileBase64 } },
-            { type: 'text', text: '请提取这个文件中的所有文字内容，保持原有结构，不要添加任何解释。' }
+            {
+              type: 'document',
+              source: {
+                type: 'base64',
+                media_type: mimeType || 'application/pdf',
+                data: fileBase64
+              }
+            },
+            {
+              type: 'text',
+              text: '请提取这个文件中的所有文字内容，保持原有结构，不要添加任何解释。'
+            }
           ]
         }]
       })
