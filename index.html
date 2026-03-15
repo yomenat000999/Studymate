@@ -363,6 +363,7 @@ let audioChunks = [];
 
 window.onload = () => {
   document.addEventListener('invalid', e => e.preventDefault(), true);
+  document.addEventListener('invalid', e => e.preventDefault(), true);
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
     loadCourse(currentCourseId);
