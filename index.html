@@ -733,7 +733,7 @@ async function sendChat() {
   const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q) return; input.value=''; addMsg('user',q);
   const content=document.getElementById('courseContentText').value.trim();
   const transcript=transcriptText||document.getElementById('manualTranscript').value.trim();
-  const ctx = [content&&`【课件】\n${content.substring(0,1500)}`, transcript&&`【录音】\n${transcript.substring(0,1000)}`].filter(Boolean).join('\n\n');
+  const ctx = [content&&`【课件】\n${content.substring(0,800)}`, transcript&&`【录音】\n${transcript.substring(0,1000)}`].filter(Boolean).join('\n\n');
   try { const result=await callClaude([{role:'user',content:q}], ctx+'\n\n用中英双语回答，专业术语保留英文并解释。'); addMsg('ai',result); }
   catch(e) { addMsg('ai','抱歉，出错了：'+e.message); }
 }
