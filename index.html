@@ -748,5 +748,18 @@ function copyResult(id) { navigator.clipboard.writeText(document.getElementById(
 
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 </script>
+  <script>
+// Fix Safari validation popup
+window.addEventListener('load', function() {
+  document.querySelectorAll('input, textarea').forEach(function(el) {
+    el.setAttribute('novalidate', '');
+    el.removeAttribute('required');
+    el.removeAttribute('pattern');
+    el.removeAttribute('type');
+    el.setAttribute('type', 'text');
+  });
+  document.addEventListener('invalid', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
+});
+</script>
 </body>
 </html>
