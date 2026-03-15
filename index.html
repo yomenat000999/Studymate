@@ -307,7 +307,33 @@ function renderFileList() {
     </div>`).join('');
 }
 function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); readAllFiles(); }
-function readAllFiles() {
+function readAllFiles() {   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));   const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('
+');    if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; courseText = ''; return; }    let combined = otherLabels ? otherLabels + '
+
+' : '';   let pending = textFiles.length + pdfFiles.length;    if (pending === 0) {     courseText = combined.trim();     showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`);     return;   }    const tryFinish = () => {     pending--;     if (pending === 0) {       courseText = combined.trim();       document.getElementById('courseContent').value = courseText;       showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`);     }   };    textFiles.forEach(file => {     const reader = new FileReader();     reader.onload = e => {       combined += `
+
+【${file.name}】
+` + e.target.result;       tryFinish();     };     reader.readAsText(file);   });    pdfFiles.forEach(file => {     const reader = new FileReader();     reader.onload = async e => {       const base64 = e.target.result.split(',')[1];       try {         document.getElementById('courseContent').placeholder = `正在解析 ${file.name}...`;         const res = await fetch('/api/parse', {           method: 'POST',           headers: { 'Content-Type': 'application/json' },           body: JSON.stringify({ fileBase64: base64, mimeType: 'application/pdf' })         });         const data = await res.json();         if (data.text) {           combined += `
+
+【${file.name}】
+` + data.text;           showToast(`${file.name} 解析成功 ✓`);         } else {           combined += `
+
+[${file.name} 解析失败，请手动粘贴内容]`;           showToast(`${file.name} 解析失败，请手动粘贴`);         }       } catch(e) {         combined += `
+
+[${file.name} 解析出错]`;       }       tryFinish();     };     reader.readAsDataURL(file);   }); } {   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));   const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('
+');    if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; courseText = ''; return; }    let combined = otherLabels ? otherLabels + '
+
+' : '';   let pending = textFiles.length + pdfFiles.length;    if (pending === 0) {     courseText = combined.trim();     showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`);     return;   }    const tryFinish = () => {     pending--;     if (pending === 0) {       courseText = combined.trim();       document.getElementById('courseContent').value = courseText;       showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`);     }   };    textFiles.forEach(file => {     const reader = new FileReader();     reader.onload = e => {       combined += `
+
+【${file.name}】
+` + e.target.result;       tryFinish();     };     reader.readAsText(file);   });    pdfFiles.forEach(file => {     const reader = new FileReader();     reader.onload = async e => {       const base64 = e.target.result.split(',')[1];       try {         document.getElementById('courseContent').placeholder = `正在解析 ${file.name}...`;         const res = await fetch('/api/parse', {           method: 'POST',           headers: { 'Content-Type': 'application/json' },           body: JSON.stringify({ fileBase64: base64, mimeType: 'application/pdf' })         });         const data = await res.json();         if (data.text) {           combined += `
+
+【${file.name}】
+` + data.text;           showToast(`${file.name} 解析成功 ✓`);         } else {           combined += `
+
+[${file.name} 解析失败，请手动粘贴内容]`;           showToast(`${file.name} 解析失败，请手动粘贴`);         }       } catch(e) {         combined += `
+
+[${file.name} 解析出错]`;       }       tryFinish();     };     reader.readAsDataURL(file);   }); } {
   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));
   const otherLabels = uploadedFiles.filter(f => !f.name.endsWith('.txt')).map(f => `[已上传：${f.name}]`).join('\n');
   if (!uploadedFiles.length) { document.getElementById('courseContent').value = ''; return; }
