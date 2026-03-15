@@ -250,7 +250,8 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
           </select>
         </div>
         <div style="margin-top:20px;">
-          <button class="btn btn-primary" onclick="generateStudyMaterial()" id="genBtn">✨ 生成学习材料</button>
+    <button class="btn btn-primary" onclick="generateStudyMaterial()" id="genBtn">✨ 生成学习材料</button>
+        <span id="parsingHint" style="display:none;font-size:13px;color:var(--accent);margin-left:10px;">⏳ 文件解析中，请稍候...</span>
         </div>
 <div class="loading" id="genLoading"><div class="spinner"></div><span id="genLoadingText">AI 正在分析课件内容...</span></div>
 
@@ -557,6 +558,8 @@ function renderFileList() {
 function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); readAllFiles(); }
 
 async function readAllFiles() {
+  document.getElementById('genBtn').disabled = true;
+document.getElementById('parsingHint').style.display = 'inline';
   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));
   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));
   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));
@@ -584,7 +587,8 @@ for (const file of pdfFiles) {
     } catch(e) { showToast(`${file.name} 解析出错，请手动粘贴`); }
     pending--;
   }
-  if (pending <= 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`文件读取完成 ✓`); }
+  if (pending <= 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`文件读取完成 ✓`);document.getElementById('genBtn').disabled = false;
+document.getElementById('parsingHint').style.display = 'none'; }
 }
 
 function toggleOpt(btn) { btn.classList.toggle('selected'); }
