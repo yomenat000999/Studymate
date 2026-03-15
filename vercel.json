@@ -1,11 +1,9 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "api/chat.js", "use": "@vercel/node" },
-    { "src": "api/parse.js", "use": "@vercel/node" },
-    { "src": "api/transcribe.js", "use": "@vercel/node" }
-  ],
+  "functions": {
+    "api/chat.js": { "memory": 256 },
+    "api/parse.js": { "memory": 256 },
+    "api/transcribe.js": { "memory": 256 }
+  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
