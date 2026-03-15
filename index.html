@@ -567,20 +567,24 @@ function readAllFiles() {
   if (pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`); return; }
   const tryFinish = () => { if (--pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`); } };
   textFiles.forEach(file => { const r = new FileReader(); r.onload = e => { combined += `\n\n【${file.name}】\n` + e.target.result; tryFinish(); }; r.readAsText(file); });
-  pdfFiles.forEach(file => {
-    const r = new FileReader();
-    r.onload = async e => {
-      const base64 = e.target.result.split(',')[1];
-      try {
-        const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
-        const data = await res.json();
-        if (data.text) { combined += `\n\n【${file.name}】\n` + data.text; } else { showToast(`${file.name} 解析失败，请手动粘贴`); }
-        if (data.text) showToast(`${file.name} 解析成功 ✓`);
-       } catch(e) { showToast(`${file.name} 解析出错，请手动粘贴`); }
-      tryFinish();
-    };
-    r.readAsDataURL(file);
-  });
+for (const file of pdfFiles) {
+  if (file.size > 2 * 1024 * 1024) { showToast(`${file.name} 超过2MB，请压缩后再上传`); pending--; continue; }
+    showToast(`⏳ 正在解析 ${file.name}...`);
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = e => resolve(e.target.result.split(',')[1]);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
+      const data = await res.json();
+      if (data.text) { combined += `\n\n【${file.name}】\n` + data.text; showToast(`✓ ${file.name} 解析成功`); }
+      else { showToast(`${file.name} 解析失败，请手动粘贴`); }
+    } catch(e) { showToast(`${file.name} 解析出错，请手动粘贴`); }
+    pending--;
+  }
+  if (pending <= 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`文件读取完成 ✓`); }
 }
 
 function toggleOpt(btn) { btn.classList.toggle('selected'); }
