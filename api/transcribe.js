@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
       method: 'POST',
       headers: { authorization: apiKey, 'content-type': 'application/json' },
-      body: JSON.stringify({ audio_url: uploadData.upload_url }),
+      body: JSON.stringify({ audio_url: uploadData.upload_url, speech_model: 'universal-2' }),
     });
     const transcriptData = await transcriptRes.json();
     if (!transcriptData.id) {
