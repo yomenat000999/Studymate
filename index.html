@@ -371,22 +371,51 @@ async function startRecording() {
 }
 
 function stopRecording() {
-  if (mediaRecorder) { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t => t.stop()); }
+  if (window._recognition) { window._recognition.stop(); }
   clearInterval(recInterval);
   document.getElementById('recDot').classList.remove('recording');
-  document.getElementById('recLabel').textContent = '录音结束';
+  document.getElementById('recLabel').textContent = '转录中...';
   document.getElementById('recStartBtn').style.display = 'inline-flex';
   document.getElementById('recStopBtn').style.display = 'none';
-  const timeStr = document.getElementById('recTimer').textContent;
-  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 录音完成（' + timeStr + '）</span><br><br><span style="color:var(--muted);font-size:13px;">请将录音转文字后粘贴到下方输入框，点保存后即可在课后复习使用。</span>';
-  showToast('录音结束，请转录后粘贴到下方');
-}
 
-function saveTranscript() {
-  transcriptText = document.getElementById('manualTranscript').value.trim();
-  if (!transcriptText) { showToast('请先粘贴转录内容'); return; }
-  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录内容已保存，去「课后复习」生成复习材料</span>';
-  showToast('转录内容已保存 ✓ 现在可以去课后复习了');
+  if (mediaRecorder) {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+
+    mediaRecorder.onstop = async () => {
+      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在自动转录录音，请稍候...</span>';
+
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        try {
+          const res = await fetch('/api/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audioBase64: base64, mimeType: 'audio/webm' })
+          });
+          const data = await res.json();
+          if (data.transcript) {
+            transcriptText = data.transcript;
+            document.getElementById('manualTranscript').value = transcriptText;
+            document.getElementById('transcriptBox').innerHTML =
+              '<span style="color:var(--accent2)">✓ 转录完成！已自动保存，去「课后复习」使用</span><br><br>' +
+              '<span style="color:var(--ink); font-size:13px;">' + transcriptText.substring(0, 200) + (transcriptText.length > 200 ? '...' : '') + '</span>';
+            document.getElementById('recLabel').textContent = '转录完成';
+            showToast('转录完成 ✓ 去课后复习生成复习材料');
+          } else {
+            throw new Error(data.error || '转录失败');
+          }
+        } catch(e) {
+          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span><br><br><span style="color:var(--muted);font-size:13px;">请手动粘贴到下方输入框</span>';
+          document.getElementById('recLabel').textContent = '转录失败';
+          showToast('转录失败，请手动粘贴');
+        }
+      };
+      reader.readAsDataURL(audioBlob);
+    };
+  }
 }
 function saveTranscript() {
   transcriptText = document.getElementById('manualTranscript').value.trim();
