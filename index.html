@@ -319,7 +319,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
           <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
         </div>
         <div class="chat-input-row">
-          <input type="text" id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter')sendChat()"/>
+    <input type="text" id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter')sendChat()" autocorrect="off" autocapitalize="off" autocomplete="off" spellcheck="false"/>
           <button class="btn btn-primary" onclick="sendChat()">发送</button>
         </div>
       </div>
