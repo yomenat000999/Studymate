@@ -574,9 +574,9 @@ function readAllFiles() {
       try {
         const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
         const data = await res.json();
-        combined += data.text ? `\n\n【${file.name}】\n` + data.text : `\n\n[${file.name} 解析失败，请手动粘贴]`;
+        if (data.text) { combined += `\n\n【${file.name}】\n` + data.text; } else { showToast(`${file.name} 解析失败，请手动粘贴`); }
         if (data.text) showToast(`${file.name} 解析成功 ✓`);
-      } catch(e) { combined += `\n\n[${file.name} 解析出错]`; }
+       } catch(e) { showToast(`${file.name} 解析出错，请手动粘贴`); }
       tryFinish();
     };
     r.readAsDataURL(file);
@@ -587,7 +587,7 @@ function toggleOpt(btn) { btn.classList.toggle('selected'); }
 function getSelectedOpts() { return [...document.querySelectorAll('#panel-prep .opt-btn.selected')].map(b => b.textContent.trim()); }
 
 async function callClaude(messages, systemPrompt) {
-  const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages, system:systemPrompt, max_tokens:2000}) });
+  const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages, system:systemPrompt, max_tokens:4000}) });
   if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
   return (await res.json()).content[0].text;
 }
