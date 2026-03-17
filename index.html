@@ -684,6 +684,8 @@ mediaRecorder.onstop = async () => {
           document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span>';
         }
       };
+  }
+}
       setTimeout(poll, 5000);
 
     } catch(e) {
