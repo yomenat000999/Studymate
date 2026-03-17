@@ -692,15 +692,6 @@ function stopRecording() {
     };
   }
 }
-      setTimeout(poll, 5000);
-
-    } catch(e) {
-      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span>';
-      document.getElementById('recLabel').textContent = '转录失败';
-    }
-  };
-  reader.readAsDataURL(blob);
-};
 
 function saveTranscript() {
   transcriptText = document.getElementById('manualTranscript').value.trim();
