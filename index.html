@@ -644,31 +644,55 @@ function stopRecording() {
   if (mediaRecorder) {
     mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(t => t.stop());
-    mediaRecorder.onstop = async () => {
-      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在自动转录...</span>';
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      const reader = new FileReader();
-      reader.onload = async () => {
+mediaRecorder.onstop = async () => {
+  document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在上传录音...</span>';
+  const blob = new Blob(audioChunks, { type: 'audio/webm' });
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({audioBase64: reader.result.split(',')[1], mimeType: 'audio/webm'})
+      });
+      const data = await res.json();
+      if (!data.transcriptId) throw new Error(data.error || '上传失败');
+
+      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 转录中，请稍候（通常需要1-3分钟）...</span>';
+
+      const poll = async () => {
         try {
-          const res = await fetch('/api/transcribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({audioBase64:reader.result.split(',')[1], mimeType:'audio/webm'}) });
-          const data = await res.json();
-          if (data.transcript) {
-            transcriptText = data.transcript;
+          const pollRes = await fetch('/api/transcribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({transcriptId: data.transcriptId})
+          });
+          const pollData = await pollRes.json();
+          if (pollData.status === 'completed') {
+            transcriptText = pollData.transcript;
             document.getElementById('manualTranscript').value = transcriptText;
             saveCourseData();
-            document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录完成，已保存到本课程</span><br><br><span style="font-size:13px;">' + transcriptText.substring(0,200) + (transcriptText.length>200?'...':'') + '</span>';
+            document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录完成！已保存到本课程</span><br><br><span style="font-size:13px;">' + transcriptText.substring(0,200) + (transcriptText.length>200?'...':'') + '</span>';
             document.getElementById('recLabel').textContent = '转录完成';
             showToast('转录完成 ✓ 去课后复习生成材料');
-          } else throw new Error(data.error || '转录失败');
+          } else if (pollData.status === 'error') {
+            throw new Error(pollData.error || '转录失败');
+          } else {
+            setTimeout(poll, 5000);
+          }
         } catch(e) {
-          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span><br><br><span style="color:var(--muted);font-size:13px;">请手动粘贴到下方</span>';
-          document.getElementById('recLabel').textContent = '转录失败';
+          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span>';
         }
       };
-      reader.readAsDataURL(blob);
-    };
-  }
-}
+      setTimeout(poll, 5000);
+
+    } catch(e) {
+      document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">转录失败：' + e.message + '</span>';
+      document.getElementById('recLabel').textContent = '转录失败';
+    }
+  };
+  reader.readAsDataURL(blob);
+};
 
 function saveTranscript() {
   transcriptText = document.getElementById('manualTranscript').value.trim();
