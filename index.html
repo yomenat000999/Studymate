@@ -555,7 +555,7 @@ document.getElementById('parsingHint').style.display = 'inline';
   const tryFinish = () => { if (--pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`); } };
   textFiles.forEach(file => { const r = new FileReader(); r.onload = e => { combined += `\n\n【${file.name}】\n` + e.target.result; tryFinish(); }; r.readAsText(file); });
 for (const file of pdfFiles) {
-  if (file.size > 2 * 1024 * 1024) { showToast(`${file.name} 超过2MB，请压缩后再上传`); pending--; continue; }
+if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} 超过5MB，请手动复制文字粘贴`); pending--; if(pending<=0){document.getElementById('courseContentText').value=combined.trim();saveCourseData();document.getElementById('genBtn').disabled=false;document.getElementById('parsingHint').style.display='none';} continue; }
     showToast(`⏳ 正在解析 ${file.name}...`);
     try {
       const base64 = await new Promise((resolve, reject) => {
