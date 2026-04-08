@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyMate · 留学生AI学习助手</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#c8553d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -162,6 +166,31 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .auth-signout { width:100%; padding:8px 12px; background:none; border:none; border-radius:8px; text-align:left; cursor:pointer; font-size:13px; color:var(--ink); font-family:'DM Sans',sans-serif; }
 .auth-signout:hover { background:var(--cream); }
 .auth-wrapper { position:relative; flex-shrink:0; }
+
+/* ===== SUBJECT MODE ===== */
+.arts-only { display: none; }
+.science-only { display: none; }
+body.arts-mode .arts-only { display: block; }
+body.science-only .science-only { display: block; }
+body.science-mode .science-only { display: block; }
+
+/* ===== SUBJECT MODE SWITCHER ===== */
+.subject-switcher { display: flex; align-items: center; gap: 6px; background: var(--cream); border: 1px solid var(--border); border-radius: 99px; padding: 3px 4px; flex-shrink: 0; }
+.subject-btn { padding: 5px 12px; border: none; background: none; border-radius: 99px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.subject-btn.active { background: var(--ink); color: #fff; }
+
+/* ===== NEW FEATURE CARDS ===== */
+.exam-btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.vocab-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.vocab-table th { background: var(--ink); color: #fff; padding: 8px 12px; text-align: left; }
+.vocab-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.vocab-table tr:nth-child(even) td { background: var(--cream); }
+.essay-textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; margin-bottom: 10px; }
+.essay-textarea:focus { outline: none; border-color: var(--accent); }
+.citation-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.share-copied { background: var(--accent2) !important; }
+
 .joint-review-section { margin-top: 24px; padding: 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
 .joint-review-section h3 { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 8px; }
 .hint { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
@@ -224,6 +253,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
     <button class="btn-new-course" onclick="showNewCourseModal()">＋ 新建</button>
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+    <div class="subject-switcher"><button class="subject-btn active" id="artsBtn" onclick="setSubjectMode('arts')">📚 文科</button><button class="subject-btn" id="sciBtn" onclick="setSubjectMode('science')">🔬 理科</button></div>
     <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
     <div class="auth-wrapper" id="authWrapper">
       <!-- Sign in button (shown when logged out) -->
@@ -262,6 +292,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
       <div class="course-banner-actions">
         <button class="btn-sm" onclick="renameCourse()">✏️ 重命名</button>
         <button class="btn-sm danger" onclick="deleteCourse()">🗑 删除</button>
+        <button class="btn-sm" onclick="shareCourse()" id="shareBtn">🔗 分享</button>
       </div>
     </div>
 
@@ -368,6 +399,134 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
           <button class="btn btn-primary" onclick="sendChat()">发送</button>
         </div>
       </div>
+
+      <!-- ===== MISSING REVIEW ELEMENTS (referenced by JS) ===== -->
+      <div class="loading" id="reviewLoading" style="display:none;padding:14px 0;"><div class="spinner"></div><span>AI 生成中...</span></div>
+      <div class="result-box" id="reviewResult" style="display:none;">
+        <div class="result-header"><span id="reviewResultTitle">结果</span><button class="copy-btn" onclick="copyResult('reviewResultContent')">复制</button></div>
+        <div class="result-content" id="reviewResultContent"></div>
+      </div>
+      <div id="flashcardArea" style="display:none;">
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:12px;">🗂 Flashcard</div>
+        <div class="flashcard-grid" id="flashcardGrid"></div>
+      </div>
+
+      <!-- ===== 1. 考试题库 ===== -->
+      <div class="card">
+        <div class="card-title"><div class="icon icon-gold">📝</div>考试题库生成</div>
+        <div class="card-sub">基于课件和录音内容，AI 自动生成考试题目</div>
+        <div class="exam-btn-group">
+          <button class="btn btn-primary" onclick="generateExamQuestions('choice')">生成选择题（5题）</button>
+          <button class="btn" style="background:var(--cream);color:var(--ink);border:1px solid var(--border);" onclick="generateExamQuestions('short')">生成简答题（3题）</button>
+          <button class="btn" style="background:var(--cream);color:var(--ink);border:1px solid var(--border);" onclick="generateExamQuestions('terms')">生成名词解释（5个）</button>
+        </div>
+        <div class="loading" id="examLoading" style="display:none;"><div class="spinner"></div><span>AI 生成题目中...</span></div>
+        <div class="result-box" id="examResult" style="display:none;">
+          <div class="result-header"><span id="examResultTitle">考试题库</span><button class="copy-btn" onclick="copyResult('examResultContent')">复制</button></div>
+          <div class="result-content" id="examResultContent"></div>
+        </div>
+      </div>
+
+      <!-- ===== 2. 词汇表 ===== -->
+      <div class="card">
+        <div class="card-title"><div class="icon icon-green">📖</div>词汇表自动生成</div>
+        <div class="card-sub">AI 从课件内容提取10-15个专业词汇，生成学习表格</div>
+        <button class="btn btn-primary" onclick="generateVocabList()">📖 生成词汇表</button>
+        <div class="loading" id="vocabLoading" style="display:none;"><div class="spinner"></div><span>AI 提取词汇中...</span></div>
+        <div id="vocabResult" style="display:none;margin-top:16px;">
+          <div id="vocabTableContainer"></div>
+          <div style="margin-top:10px;">
+            <button class="opt-btn" onclick="copyVocabTable()">📋 复制词汇表</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 3. Essay 辅助 ===== -->
+      <div class="card">
+        <div class="card-title"><div class="icon icon-orange">✍️</div>Essay 辅助</div>
+        <div class="card-sub">输入作业题目，AI 帮你生成大纲和论据</div>
+        <textarea class="essay-textarea" id="essayPromptInput" placeholder="粘贴你的作业题目或论文题目..."></textarea>
+        <div class="exam-btn-group">
+          <button class="btn btn-primary" onclick="essayHelper('outline')">生成论文大纲</button>
+          <button class="btn" style="background:var(--cream);color:var(--ink);border:1px solid var(--border);" onclick="essayHelper('support')">找支持论据</button>
+          <button class="btn" style="background:var(--cream);color:var(--ink);border:1px solid var(--border);" onclick="essayHelper('counter')">找反驳论据</button>
+          <button class="btn" style="background:var(--cream);color:var(--ink);border:1px solid var(--border);" onclick="essayHelper('critical')">批判性分析框架</button>
+        </div>
+        <div class="loading" id="essayLoading" style="display:none;"><div class="spinner"></div><span>AI 生成中...</span></div>
+        <div class="result-box" id="essayResult" style="display:none;">
+          <div class="result-header"><span id="essayResultTitle">Essay 辅助结果</span><button class="copy-btn" onclick="copyResult('essayResultContent')">复制</button></div>
+          <div class="result-content" id="essayResultContent"></div>
+        </div>
+      </div>
+
+      <!-- ===== 5. 文科功能 (arts-only) ===== -->
+      <div class="arts-only">
+        <!-- 引用格式化 -->
+        <div class="card">
+          <div class="card-title"><div class="icon icon-gold">📜</div>引用格式化</div>
+          <div class="card-sub">将原文句子格式化为标准学术引用格式</div>
+          <textarea class="essay-textarea" id="citationInput" placeholder="粘贴原文句子（包含作者、年份等信息）..."></textarea>
+          <div class="citation-row">
+            <span style="font-size:13px;color:var(--muted);">引用格式：</span>
+            <select id="citationFormat">
+              <option value="Harvard">Harvard</option>
+              <option value="APA">APA</option>
+              <option value="Chicago">Chicago</option>
+            </select>
+            <button class="btn btn-primary" onclick="formatCitation()">格式化引用</button>
+          </div>
+          <div class="loading" id="citationLoading" style="display:none;"><div class="spinner"></div><span>AI 格式化中...</span></div>
+          <div class="result-box" id="citationResult" style="display:none;">
+            <div class="result-header"><span>引用格式结果</span><button class="copy-btn" onclick="copyResult('citationResultContent')">复制</button></div>
+            <div class="result-content" id="citationResultContent"></div>
+          </div>
+        </div>
+
+        <!-- 论点对比分析 -->
+        <div class="card">
+          <div class="card-title"><div class="icon icon-green">⚖️</div>论点对比分析</div>
+          <div class="card-sub">输入两个概念，AI 生成详细对比表格</div>
+          <div class="compare-row">
+            <textarea class="essay-textarea" id="conceptA" placeholder="概念 A（例如：Capitalism）" style="min-height:60px;"></textarea>
+            <textarea class="essay-textarea" id="conceptB" placeholder="概念 B（例如：Socialism）" style="min-height:60px;"></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="compareArguments()">生成对比</button>
+          <div class="loading" id="compareLoading" style="display:none;"><div class="spinner"></div><span>AI 对比分析中...</span></div>
+          <div class="result-box" id="compareResult" style="display:none;">
+            <div class="result-header"><span>对比分析结果</span><button class="copy-btn" onclick="copyResult('compareResultContent')">复制</button></div>
+            <div class="result-content" id="compareResultContent"></div>
+          </div>
+        </div>
+
+        <!-- 批判性分析框架 -->
+        <div class="card">
+          <div class="card-title"><div class="icon icon-orange">🔍</div>批判性分析框架</div>
+          <div class="card-sub">输入一个观点或理论，AI 生成批判性分析框架</div>
+          <textarea class="essay-textarea" id="criticalInput" placeholder="输入一个观点或理论（例如：Neoliberalism promotes economic growth）..."></textarea>
+          <button class="btn btn-primary" onclick="criticalAnalysis()">生成框架</button>
+          <div class="loading" id="criticalLoading" style="display:none;"><div class="spinner"></div><span>AI 分析中...</span></div>
+          <div class="result-box" id="criticalResult" style="display:none;">
+            <div class="result-header"><span>批判性分析框架</span><button class="copy-btn" onclick="copyResult('criticalResultContent')">复制</button></div>
+            <div class="result-content" id="criticalResultContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 6. 理科功能 (science-only) ===== -->
+      <div class="science-only">
+        <!-- 公式提取 -->
+        <div class="card">
+          <div class="card-title"><div class="icon icon-gold">🔬</div>公式提取</div>
+          <div class="card-sub">AI 从课件内容提取所有公式并解释变量含义</div>
+          <button class="btn btn-primary" onclick="extractFormulas()">提取公式</button>
+          <div class="loading" id="formulaLoading" style="display:none;"><div class="spinner"></div><span>AI 提取公式中...</span></div>
+          <div class="result-box" id="formulaResult" style="display:none;">
+            <div class="result-header"><span>提取的公式</span><button class="copy-btn" onclick="copyResult('formulaResultContent')">复制</button></div>
+            <pre class="result-content" id="formulaResultContent" style="font-family:monospace;white-space:pre-wrap;"></pre>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="joint-review-section" id="jointReviewSection" style="display:none">
@@ -415,6 +574,23 @@ let _pendingDeleteType = null;
 
 window.onload = () => {
   document.addEventListener('invalid', e => e.preventDefault(), true);
+  // Subject mode init
+  const savedSubject = localStorage.getItem('sm_subject') || 'arts';
+  document.body.classList.add(savedSubject + '-mode');
+  if (document.getElementById('artsBtn')) document.getElementById('artsBtn').classList.toggle('active', savedSubject === 'arts');
+  if (document.getElementById('sciBtn')) document.getElementById('sciBtn').classList.toggle('active', savedSubject === 'science');
+  // Check share link
+  const urlParams = new URLSearchParams(window.location.search);
+  const shareParam = urlParams.get('share');
+  if (shareParam) {
+    try {
+      const shareData = JSON.parse(decodeURIComponent(atob(shareParam)));
+      showToast('正在查看「' + shareData.name + '」的共享笔记');
+      const tmpCourse = { ...shareData, id: 'shared_' + Date.now(), readOnly: true };
+      courses.unshift(tmpCourse);
+      loadCourse(tmpCourse.id);
+    } catch(e) {}
+  }
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
     loadCourse(currentCourseId);
@@ -1007,6 +1183,192 @@ function addMsg(role,text) {
 function copyResult(id) { navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>showToast('已复制 ✓')).catch(()=>showToast('请手动复制')); }
 
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ===== SUBJECT MODE =====
+function setSubjectMode(mode) {
+  localStorage.setItem('sm_subject', mode);
+  document.body.classList.remove('arts-mode', 'science-mode');
+  document.body.classList.add(mode + '-mode');
+  document.getElementById('artsBtn').classList.toggle('active', mode === 'arts');
+  document.getElementById('sciBtn').classList.toggle('active', mode === 'science');
+}
+
+// ===== SHARE COURSE =====
+function shareCourse() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  const shareData = {
+    name: course.name,
+    courseText: course.courseText || '',
+    transcript: course.transcript || '',
+    notes: course.notes || '',
+    createdAt: course.createdAt
+  };
+  const encoded = btoa(encodeURIComponent(JSON.stringify(shareData)));
+  const shareUrl = window.location.origin + '?share=' + encoded;
+  navigator.clipboard.writeText(shareUrl).then(() => {
+    showToast('分享链接已复制 ✓');
+  }).catch(() => {
+    showToast('请手动复制：' + shareUrl);
+  });
+}
+
+// ===== 1. 考试题库 =====
+async function generateExamQuestions(type) {
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
+  const course = getCourse(currentCourseId);
+  const content = (course.courseText || '') + '\n' + (course.transcript || '');
+  if (!content.trim()) { showToast('请先上传课件或保存录音转录'); return; }
+  const prompts = {
+    choice: `基于以下课程内容，生成5道选择题。每道题包含题目、4个选项（A/B/C/D）和正确答案解析。\n用中英双语，专业术语保留英文。\n\n课程内容：${content.substring(0,3000)}`,
+    short: `基于以下课程内容，生成3道简答题，每道题附上参考答案要点（100-150字）。\n用中英双语，专业术语保留英文。\n\n课程内容：${content.substring(0,3000)}`,
+    terms: `基于以下课程内容，生成5个名词解释题，每个术语附上详细中英双语解释。\n格式：术语（英文）：中文解释+用法+例句\n\n课程内容：${content.substring(0,3000)}`
+  };
+  const titles = { choice: '选择题（5题）', short: '简答题（3题）', terms: '名词解释（5个）' };
+  document.getElementById('examLoading').style.display = 'flex';
+  document.getElementById('examResult').style.display = 'none';
+  try {
+    const result = await callClaude([{ role: 'user', content: prompts[type] }], '你是专业的留学生学习助手，擅长生成高质量的考试题目。');
+    document.getElementById('examResultTitle').textContent = titles[type];
+    document.getElementById('examResultContent').textContent = result;
+    document.getElementById('examResult').style.display = 'block';
+    showToast('题目生成完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('examLoading').style.display = 'none'; }
+}
+
+// ===== 2. 词汇表 =====
+async function generateVocabList() {
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
+  const course = getCourse(currentCourseId);
+  const content = (course.courseText || '') + '\n' + (course.transcript || '');
+  if (!content.trim()) { showToast('请先上传课件或保存录音转录'); return; }
+  document.getElementById('vocabLoading').style.display = 'flex';
+  document.getElementById('vocabResult').style.display = 'none';
+  const prompt = `从以下课程内容中提取10-15个重要专业词汇，以表格形式输出：\n| 英文词汇 | 中文解释 | 课程中的用法/例句 |\n每行一个词汇，用竖线 | 分隔。第一行是表头。\n\n内容：${content.substring(0,3000)}`;
+  try {
+    const result = await callClaude([{ role: 'user', content: prompt }], '你是留学生学习助手，擅长提取和整理专业词汇。');
+    const lines = result.split('\n').filter(l => l.trim().startsWith('|'));
+    let tableHTML = '<table class="vocab-table">';
+    lines.forEach((line, i) => {
+      const cells = line.split('|').filter(c => c.trim());
+      if (cells.length >= 2) {
+        if (i === 0 || (i === 1 && line.includes('---'))) {
+          if (i === 0) tableHTML += '<thead><tr>' + cells.map(c => `<th>${c.trim()}</th>`).join('') + '</tr></thead><tbody>';
+        } else if (!line.includes('---')) {
+          tableHTML += '<tr>' + cells.map(c => `<td>${c.trim()}</td>`).join('') + '</tr>';
+        }
+      }
+    });
+    tableHTML += '</tbody></table>';
+    document.getElementById('vocabTableContainer').innerHTML = tableHTML + '<div style="margin-top:8px;font-size:12px;color:var(--muted);">共 ' + (lines.filter(l=>!l.includes('---')).length - 1) + ' 个词汇</div>';
+    document.getElementById('vocabResult').style.display = 'block';
+    showToast('词汇表生成完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('vocabLoading').style.display = 'none'; }
+}
+
+function copyVocabTable() {
+  const table = document.getElementById('vocabTableContainer');
+  if (!table) return;
+  const rows = table.querySelectorAll('tr');
+  const text = Array.from(rows).map(r => Array.from(r.querySelectorAll('th,td')).map(c => c.textContent.trim()).join(' | ')).join('\n');
+  navigator.clipboard.writeText(text).then(() => showToast('词汇表已复制 ✓')).catch(() => showToast('请手动复制'));
+}
+
+// ===== 3. Essay 辅助 =====
+async function essayHelper(type) {
+  const question = document.getElementById('essayPromptInput').value.trim();
+  if (!question) { showToast('请先输入作业题目'); return; }
+  const course = getCourse(currentCourseId);
+  const courseCtx = course ? ('\n\n课程背景：' + (course.courseText || '').substring(0, 1500)) : '';
+  const prompts = {
+    outline: `请根据以下论文题目生成一个详细的论文大纲，包括引言、3-5个主要论点、结论。每个部分附上关键要点。\n\n论文题目：${question}${courseCtx}`,
+    support: `请为以下论文题目找出5-8个有力的支持论据，每个论据附上论证逻辑和可能的参考来源方向。\n\n题目：${question}${courseCtx}`,
+    counter: `请为以下论文题目找出4-6个反驳论据（可能的反对观点），以及如何在论文中有效应对这些反驳。\n\n题目：${question}${courseCtx}`,
+    critical: `请为以下观点/题目生成批判性分析框架：\n1. 支持论据\n2. 反驳论据\n3. 学界争议\n4. 延伸角度与未来研究方向\n\n题目：${question}${courseCtx}`
+  };
+  const titles = { outline: '论文大纲', support: '支持论据', counter: '反驳论据', critical: '批判性分析框架' };
+  document.getElementById('essayLoading').style.display = 'flex';
+  document.getElementById('essayResult').style.display = 'none';
+  try {
+    const result = await callClaude([{ role: 'user', content: prompts[type] }], '你是留学生学习助手，擅长学术写作辅导，用中英双语输出，学术术语保留英文。');
+    document.getElementById('essayResultTitle').textContent = titles[type];
+    document.getElementById('essayResultContent').textContent = result;
+    document.getElementById('essayResult').style.display = 'block';
+    showToast('生成完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('essayLoading').style.display = 'none'; }
+}
+
+// ===== 5. 文科 - 引用格式化 =====
+async function formatCitation() {
+  const text = document.getElementById('citationInput').value.trim();
+  const format = document.getElementById('citationFormat').value;
+  if (!text) { showToast('请先粘贴原文句子'); return; }
+  document.getElementById('citationLoading').style.display = 'flex';
+  document.getElementById('citationResult').style.display = 'none';
+  const prompt = `请将以下文本格式化为标准 ${format} 引用格式。如果信息不完整，说明缺少哪些信息，并给出尽可能完整的格式示例。\n\n原文：${text}`;
+  try {
+    const result = await callClaude([{ role: 'user', content: prompt }], '你是学术写作助手，精通 Harvard、APA、Chicago 等引用格式。');
+    document.getElementById('citationResultContent').textContent = result;
+    document.getElementById('citationResult').style.display = 'block';
+    showToast('引用格式化完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('citationLoading').style.display = 'none'; }
+}
+
+// ===== 5. 文科 - 论点对比 =====
+async function compareArguments() {
+  const a = document.getElementById('conceptA').value.trim();
+  const b = document.getElementById('conceptB').value.trim();
+  if (!a || !b) { showToast('请输入两个概念'); return; }
+  document.getElementById('compareLoading').style.display = 'flex';
+  document.getElementById('compareResult').style.display = 'none';
+  const prompt = `请对以下两个概念进行深入对比分析，以表格或结构化形式输出：\n- 相似点\n- 主要差异\n- 各自的局限性\n- 适用场景\n\n概念A：${a}\n概念B：${b}`;
+  try {
+    const result = await callClaude([{ role: 'user', content: prompt }], '你是学术分析助手，擅长概念比较和批判性分析，用中英双语输出。');
+    document.getElementById('compareResultContent').textContent = result;
+    document.getElementById('compareResult').style.display = 'block';
+    showToast('对比分析完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('compareLoading').style.display = 'none'; }
+}
+
+// ===== 5. 文科 - 批判性分析 =====
+async function criticalAnalysis() {
+  const theory = document.getElementById('criticalInput').value.trim();
+  if (!theory) { showToast('请输入观点或理论'); return; }
+  document.getElementById('criticalLoading').style.display = 'flex';
+  document.getElementById('criticalResult').style.display = 'none';
+  const prompt = `请对以下观点/理论生成完整的批判性分析框架：\n\n## 支持论据（至少3点）\n## 反驳论据（至少3点）\n## 学界争议（主要学派的不同立场）\n## 延伸角度（跨学科视角、未来研究方向）\n\n观点/理论：${theory}`;
+  try {
+    const result = await callClaude([{ role: 'user', content: prompt }], '你是批判性思维导师，帮助学生从多角度分析学术观点，用中英双语输出。');
+    document.getElementById('criticalResultContent').textContent = result;
+    document.getElementById('criticalResult').style.display = 'block';
+    showToast('分析框架生成完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('criticalLoading').style.display = 'none'; }
+}
+
+// ===== 6. 理科 - 公式提取 =====
+async function extractFormulas() {
+  if (!currentCourseId) { showToast('请先选择课程'); return; }
+  const course = getCourse(currentCourseId);
+  const content = (course.courseText || '') + '\n' + (course.transcript || '');
+  if (!content.trim()) { showToast('请先上传课件内容'); return; }
+  document.getElementById('formulaLoading').style.display = 'flex';
+  document.getElementById('formulaResult').style.display = 'none';
+  const prompt = `请从以下课程内容中提取所有数学公式、物理定律、化学方程式等，并解释每个变量/符号的含义。\n格式：\n公式名称\n公式：[公式文本]\n变量说明：[各变量含义]\n应用场景：[何时使用]\n\n课程内容：${content.substring(0,3000)}`;
+  try {
+    const result = await callClaude([{ role: 'user', content: prompt }], '你是理科学习助手，擅长整理和解释数学、物理、化学公式。');
+    document.getElementById('formulaResultContent').textContent = result;
+    document.getElementById('formulaResult').style.display = 'block';
+    showToast('公式提取完成 ✓');
+  } catch(e) { showToast('错误：' + e.message); }
+  finally { document.getElementById('formulaLoading').style.display = 'none'; }
+}
+
 </script>
   <script>
 // Fix Safari validation popup
@@ -1129,6 +1491,13 @@ window.addEventListener('load', function() {
   </div>
 </div>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js');
+  });
+}
+</script>
 </body>
 </html>
 
