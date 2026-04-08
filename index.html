@@ -804,7 +804,7 @@ function stopRecording() {
           });
           const data = await res.json();
           if (!data.transcriptId) throw new Error(data.error || '上传失败');
-          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 转录中，请稍候（通常需要1-3分钟）...</span>';
+          document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在转写中... (约需30-60秒)<br><span style="font-size:12px">转写完成后将自动翻译为中文</span></span>';
           const poll = async () => {
             try {
               const pollRes = await fetch('/api/transcribe', {
@@ -814,12 +814,20 @@ function stopRecording() {
               });
               const pollData = await pollRes.json();
               if (pollData.status === 'completed') {
-                transcriptText = pollData.transcript;
-                document.getElementById('manualTranscript').value = transcriptText;
+                // Use bilingual (EN + CN) if translation available, else fallback to transcript
+                const displayText = pollData.bilingual || pollData.transcript || '';
+                transcriptText = displayText;
+                document.getElementById('manualTranscript').value = displayText;
                 saveCourseData();
-                document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录完成！已保存到本课程</span><br><br><span style="font-size:13px;">' + transcriptText.substring(0,200) + (transcriptText.length>200?'...':'') + '</span>';
+                const hasTranslation = !!(pollData.translation);
+                const previewText = (pollData.transcript || '').substring(0, 150);
+                document.getElementById('transcriptBox').innerHTML =
+                  '<span style="color:var(--accent2)">✓ 转录完成' + (hasTranslation ? '，已自动翻译为中文' : '') + '！</span>' +
+                  '<br><br><span style="font-size:12px;color:var(--muted)">【英文原文预览】</span>' +
+                  '<br><span style="font-size:13px;">' + previewText + (previewText.length >= 150 ? '...' : '') + '</span>' +
+                  (hasTranslation ? '<br><br><span style="font-size:12px;color:var(--muted)">【中文翻译】已保存到转录文本框</span>' : '');
                 document.getElementById('recLabel').textContent = '转录完成';
-                showToast('转录完成 ✓ 去课后复习生成材料');
+                showToast(hasTranslation ? '✓ 转录完成，已自动翻译为中文' : '转录完成 ✓ 去课后复习生成材料');
               } else if (pollData.status === 'error') {
                 throw new Error(pollData.error || '转录失败');
               } else {
