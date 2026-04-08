@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyMate · 留学生AI学习助手</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -162,6 +163,21 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .auth-signout { width:100%; padding:8px 12px; background:none; border:none; border-radius:8px; text-align:left; cursor:pointer; font-size:13px; color:var(--ink); font-family:'DM Sans',sans-serif; }
 .auth-signout:hover { background:var(--cream); }
 .auth-wrapper { position:relative; flex-shrink:0; }
+
+/* === AUTH === */
+.auth-wrapper{position:relative;flex-shrink:0}
+.auth-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:#fff;border:1px solid var(--border);border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);transition:box-shadow .2s}
+.auth-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.auth-avatar{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);cursor:pointer;object-fit:cover}
+.auth-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.12);padding:8px;min-width:220px;z-index:500;display:none}
+.auth-dropdown.open{display:block}
+.auth-user-info{padding:10px 12px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.auth-user-name{font-weight:500;font-size:14px}
+.auth-user-email{font-size:12px;color:var(--muted);margin-top:2px}
+.auth-signout{width:100%;padding:8px 12px;background:none;border:none;border-radius:8px;text-align:left;cursor:pointer;font-size:13px;color:var(--ink);font-family:'DM Sans',sans-serif}
+.auth-signout:hover{background:var(--cream)}
+#loginScreen{display:none;position:fixed;inset:0;background:var(--paper);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 40px;text-align:center;max-width:360px;width:90%}
 </style>
 </head>
 <body><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -205,6 +221,21 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none;">
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div style="text-align:center">
+    <div style="font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);margin-bottom:8px">Study<span style="color:var(--accent)">Mate</span></div>
+    <div style="color:var(--muted);font-size:15px">留学生 AI 学习助手</div>
+  </div>
+  <div class="login-card">
+    <div style="font-size:40px;margin-bottom:16px">📚</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px">开始使用</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.6">登录后即可使用 AI 学习助手<br>管理课程、整理笔记、生成复习材料</p>
+    <div id="googleBtnContainer" style="display:flex;justify-content:center"></div>
+  </div>
+</div>
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
 <header>
   <div class="logo">Study<span>Mate</span></div>
   <div class="header-center">
@@ -902,6 +933,83 @@ window.addEventListener('load', function() {
 });
 </script>
 </div>
+</div>
+
+<script>
+(function() {
+  var CLIENT_ID = '211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com';
+  var AUTH_KEY = 'sm_user';
+
+  function onGoogleSignIn(resp) {
+    var parts = resp.credential.split('.');
+    var pad = parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    while (pad.length % 4) pad += '=';
+    var user = JSON.parse(atob(pad));
+    var data = {name: user.name, email: user.email, picture: user.picture};
+    localStorage.setItem(AUTH_KEY, JSON.stringify(data));
+    showMainApp(data);
+  }
+
+  function showMainApp(user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    var av = document.getElementById('userAvatar');
+    var sb = document.getElementById('signInBtn');
+    if (av) { av.src = user.picture; av.alt = user.name; av.style.display = 'block'; }
+    if (sb) sb.style.display = 'none';
+    var dn = document.getElementById('dropdownName');
+    var de = document.getElementById('dropdownEmail');
+    if (dn) dn.textContent = user.name;
+    if (de) de.textContent = user.email;
+  }
+
+  window.handleSignOut = function() {
+    localStorage.removeItem(AUTH_KEY);
+    try { google.accounts.id.disableAutoSelect(); } catch(e){}
+    document.getElementById('authDropdown').classList.remove('open');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+  };
+
+  document.addEventListener('click', function(e) {
+    var w = document.getElementById('authWrapper');
+    var d = document.getElementById('authDropdown');
+    if (w && d && !w.contains(e.target)) d.classList.remove('open');
+  });
+
+  window.addEventListener('load', function() {
+    // Check saved session first
+    var saved = localStorage.getItem(AUTH_KEY);
+    if (saved) {
+      try {
+        var user = JSON.parse(saved);
+        showMainApp(user);
+        // Still init Google in background for future sign-in
+        if (typeof google !== 'undefined') {
+          google.accounts.id.initialize({client_id: CLIENT_ID, callback: onGoogleSignIn});
+        }
+        return;
+      } catch(e) { localStorage.removeItem(AUTH_KEY); }
+    }
+    // No saved session - show login
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+    // Init Google
+    function tryInitGoogle() {
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({client_id: CLIENT_ID, callback: onGoogleSignIn, auto_select: false});
+        google.accounts.id.renderButton(
+          document.getElementById('googleBtnContainer'),
+          {type:'standard', theme:'outline', size:'large', text:'signin_with', locale:'zh_CN'}
+        );
+      } else {
+        setTimeout(tryInitGoogle, 200);
+      }
+    }
+    tryInitGoogle();
+  });
+})();
+</script>
 </body>
 </html>
 
