@@ -162,6 +162,9 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .auth-signout { width:100%; padding:8px 12px; background:none; border:none; border-radius:8px; text-align:left; cursor:pointer; font-size:13px; color:var(--ink); font-family:'DM Sans',sans-serif; }
 .auth-signout:hover { background:var(--cream); }
 .auth-wrapper { position:relative; flex-shrink:0; }
+.joint-review-section { margin-top: 24px; padding: 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.joint-review-section h3 { font-family: 'DM Serif Display', serif; font-size: 18px; margin-bottom: 8px; }
+.hint { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
 </style>
 </head>
 <body><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -367,6 +370,13 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
       </div>
     </div>
 
+    <div class="joint-review-section" id="jointReviewSection" style="display:none">
+      <h3>🔗 智能联合复习</h3>
+      <p class="hint">将上传的课件 PDF 与课堂录音结合，AI 帮你找出重点、补充内容和考试要点</p>
+      <button class="btn btn-primary" onclick="runJointReview()">开始联合分析</button>
+      <div id="jointReviewResult" class="result-box" style="display:none"></div>
+    </div>
+
 <button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
 
 <div class="float-notes-panel" id="floatNotesPanel">
@@ -480,6 +490,14 @@ function loadCourse(id) {
   renderCourseList();
   closeSidebar();
   switchTab('prep');
+  updateJointReviewVisibility();
+  const jointResultDiv = document.getElementById('jointReviewResult');
+  if (course.jointReview && jointResultDiv) {
+    jointResultDiv.textContent = course.jointReview;
+    jointResultDiv.style.display = 'block';
+  } else if (jointResultDiv) {
+    jointResultDiv.style.display = 'none';
+  }
 }
 
 function saveCourseData() {
@@ -489,6 +507,68 @@ function saveCourseData() {
   course.courseText = document.getElementById('courseContentText').value;
   course.transcript = document.getElementById('manualTranscript').value;
   saveCourses();
+  updateJointReviewVisibility();
+}
+
+function updateJointReviewVisibility() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  const hasPDF = course.courseText && course.courseText.trim().length > 100;
+  const hasTranscript = course.transcript && course.transcript.trim().length > 100;
+  const section = document.getElementById('jointReviewSection');
+  if (section) section.style.display = (hasPDF && hasTranscript) ? 'block' : 'none';
+}
+
+async function runJointReview() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+
+  const btn = document.querySelector('#jointReviewSection .btn');
+  btn.textContent = '分析中...';
+  btn.disabled = true;
+
+  const resultDiv = document.getElementById('jointReviewResult');
+  resultDiv.style.display = 'block';
+  resultDiv.textContent = '⏳ AI 正在联合分析课件和录音，请稍等...';
+
+  const prompt = `我有一门课的课件内容和课堂录音转写，请帮我做联合分析。
+
+【课件内容】
+${course.courseText.slice(0, 3000)}
+
+【课堂录音转写】
+${course.transcript.slice(0, 3000)}
+
+请分析并输出以下内容：
+
+## 🎯 核心重点（课件+录音双重强调）
+列出3-5个最重要的知识点
+
+## 📢 老师补充（录音中有，课件没有的）
+老师在课堂上额外说的重要内容
+
+## 📖 自学部分（课件有，但课堂未详细讲）
+建议课后自己补充学习的内容
+
+## ❓ 可能考点
+根据老师强调程度，预测3-5个可能出现在考试中的知识点
+
+用中英双语输出，专业术语保留英文并附中文解释。`;
+
+  try {
+    const result = await callClaude(
+      [{ role: 'user', content: prompt }],
+      '你是专业的留学生学习助手，擅长分析学术内容并提取考试要点。',
+      (chunk) => { resultDiv.textContent += chunk; }
+    );
+    course.jointReview = result;
+    saveCourses();
+  } catch(e) {
+    resultDiv.textContent = '分析失败：' + e.message;
+  } finally {
+    btn.textContent = '重新分析';
+    btn.disabled = false;
+  }
 }
 
 function renameCourse() {
@@ -836,11 +916,13 @@ function stopRecording() {
               const pollData = await pollRes.json();
               if (pollData.status === 'completed') {
                 transcriptText = pollData.transcript;
-                document.getElementById('manualTranscript').value = transcriptText;
+                const displayText = pollData.bilingual || pollData.transcript;
+                document.getElementById('manualTranscript').value = displayText;
                 saveCourseData();
+                updateJointReviewVisibility();
                 document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent2)">✓ 转录完成！已保存到本课程</span><br><br><span style="font-size:13px;">' + transcriptText.substring(0,200) + (transcriptText.length>200?'...':'') + '</span>';
                 document.getElementById('recLabel').textContent = '转录完成';
-                showToast('转录完成 ✓ 去课后复习生成材料');
+                showToast(pollData.translation ? '✓ 转写完成，已翻译为中文' : '转录完成 ✓ 去课后复习生成材料');
               } else if (pollData.status === 'error') {
                 throw new Error(pollData.error || '转录失败');
               } else {
