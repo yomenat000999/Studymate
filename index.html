@@ -148,38 +148,47 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   .tab { font-size: 12px; padding: 8px 8px; }
   .float-notes-panel { right: 12px; width: calc(100vw - 24px); }
 }
+</style>
 
-/* ===== AUTH STYLES ===== */
-.auth-btn { display:flex; align-items:center; gap:8px; padding:6px 14px; background:#fff; border:1px solid var(--border); border-radius:99px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink); transition:box-shadow 0.2s; flex-shrink:0; }
-.auth-btn:hover { box-shadow:0 2px 8px rgba(0,0,0,0.12); }
-.auth-btn img { width:18px; height:18px; border-radius:50%; }
-.auth-avatar { width:28px; height:28px; border-radius:50%; border:2px solid var(--accent); cursor:pointer; }
-.auth-dropdown { position:absolute; top:calc(100% + 8px); right:0; background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:8px; min-width:220px; z-index:500; display:none; }
-.auth-dropdown.open { display:block; }
-.auth-user-info { padding:10px 12px; border-bottom:1px solid var(--border); margin-bottom:6px; }
-.auth-user-name { font-weight:500; font-size:14px; }
-.auth-user-email { font-size:12px; color:var(--muted); margin-top:2px; }
-.auth-signout { width:100%; padding:8px 12px; background:none; border:none; border-radius:8px; text-align:left; cursor:pointer; font-size:13px; color:var(--ink); font-family:'DM Sans',sans-serif; }
-.auth-signout:hover { background:var(--cream); }
-.auth-wrapper { position:relative; flex-shrink:0; }
-
-/* === AUTH === */
-.auth-wrapper{position:relative;flex-shrink:0}
-.auth-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:#fff;border:1px solid var(--border);border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);transition:box-shadow .2s}
-.auth-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.auth-avatar{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);cursor:pointer;object-fit:cover}
-.auth-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.12);padding:8px;min-width:220px;z-index:500;display:none}
-.auth-dropdown.open{display:block}
-.auth-user-info{padding:10px 12px;border-bottom:1px solid var(--border);margin-bottom:6px}
-.auth-user-name{font-weight:500;font-size:14px}
-.auth-user-email{font-size:12px;color:var(--muted);margin-top:2px}
-.auth-signout{width:100%;padding:8px 12px;background:none;border:none;border-radius:8px;text-align:left;cursor:pointer;font-size:13px;color:var(--ink);font-family:'DM Sans',sans-serif}
-.auth-signout:hover{background:var(--cream)}
-#loginScreen{display:none;position:fixed;inset:0;background:var(--paper);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:24px}
-.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 40px;text-align:center;max-width:360px;width:90%}
+<!-- GOOGLE AUTH -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+#sm-login-overlay{position:fixed;inset:0;background:#f5f0e8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.sm-login-card{background:#faf7f2;border:1px solid #d4cfc4;border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+#sm-user-chip{display:none;position:fixed;top:14px;right:20px;z-index:1000;cursor:pointer;background:#fff;border:1px solid #d4cfc4;border-radius:99px;padding:4px 12px 4px 4px;display:none;align-items:center;gap:8px;font-size:13px;font-family:'DM Sans',sans-serif}
+#sm-user-chip img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+#sm-signout-menu{position:fixed;top:52px;right:20px;z-index:1000;background:#fff;border:1px solid #d4cfc4;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.1);padding:8px;min-width:200px;display:none}
+.sm-signout-info{padding:8px 12px;font-size:13px;color:#7a7568;border-bottom:1px solid #d4cfc4;margin-bottom:4px}
+.sm-signout-btn{width:100%;padding:8px 12px;background:none;border:none;border-radius:6px;text-align:left;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;color:#1a1a2e}
+.sm-signout-btn:hover{background:#ede8dc}
 </style>
 </head>
-<body><div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<body>
+<!-- LOGIN OVERLAY - hides entire app until signed in -->
+<div id="sm-login-overlay">
+  <div style="text-align:center">
+    <div style="font-family:'DM Serif Display',serif;font-size:36px;color:#1a1a2e;margin-bottom:8px">Study<span style="color:#c8553d">Mate</span></div>
+    <div style="color:#7a7568;font-size:15px">留学生 AI 学习助手</div>
+  </div>
+  <div class="sm-login-card">
+    <div style="font-size:40px;margin-bottom:16px">📚</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px;font-weight:400">开始使用</h2>
+    <p style="color:#7a7568;font-size:14px;margin-bottom:24px;line-height:1.6">登录后即可使用 AI 学习助手<br>管理课程、整理笔记、生成复习材料</p>
+    <div id="sm-google-btn" style="display:flex;justify-content:center;min-height:44px"></div>
+  </div>
+</div>
+
+<!-- USER CHIP (shown after login) -->
+<div id="sm-user-chip" onclick="document.getElementById('sm-signout-menu').style.display=document.getElementById('sm-signout-menu').style.display==='block'?'none':'block'">
+  <img id="sm-user-pic" src="" alt="">
+  <span id="sm-user-name"></span>
+</div>
+<div id="sm-signout-menu">
+  <div class="sm-signout-info" id="sm-user-email"></div>
+  <button class="sm-signout-btn" onclick="smSignOut()">退出登录</button>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -204,37 +213,6 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   </div>
 </div>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen" style="display:none; position:fixed; inset:0; background:var(--paper); z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:24px;">
-  <div style="text-align:center;">
-    <div style="font-family:'DM Serif Display',serif; font-size:36px; color:var(--ink); margin-bottom:8px;">Study<span style="color:var(--accent)">Mate</span></div>
-    <div style="color:var(--muted); font-size:15px;">留学生 AI 学习助手</div>
-  </div>
-  <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 40px; text-align:center; max-width:360px; width:90%;">
-    <div style="font-size:40px; margin-bottom:16px;">📚</div>
-    <h2 style="font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:8px;">开始使用</h2>
-    <p style="color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.6;">登录后即可使用 AI 学习助手<br>管理课程、整理笔记、生成复习材料</p>
-    <div id="googleBtnContainer" style="display:flex; justify-content:center;"></div>
-  </div>
-</div>
-
-<!-- MAIN APP -->
-<div id="mainApp" style="display:none;">
-<!-- LOGIN SCREEN -->
-<div id="loginScreen">
-  <div style="text-align:center">
-    <div style="font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);margin-bottom:8px">Study<span style="color:var(--accent)">Mate</span></div>
-    <div style="color:var(--muted);font-size:15px">留学生 AI 学习助手</div>
-  </div>
-  <div class="login-card">
-    <div style="font-size:40px;margin-bottom:16px">📚</div>
-    <h2 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:8px">开始使用</h2>
-    <p style="color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.6">登录后即可使用 AI 学习助手<br>管理课程、整理笔记、生成复习材料</p>
-    <div id="googleBtnContainer" style="display:flex;justify-content:center"></div>
-  </div>
-</div>
-<!-- MAIN APP -->
-<div id="mainApp" style="display:none">
 <header>
   <div class="logo">Study<span>Mate</span></div>
   <div class="header-center">
@@ -245,26 +223,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
     </div>
     <button class="btn-new-course" onclick="showNewCourseModal()">＋ 新建</button>
   </div>
-  <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-    <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
-    <div class="auth-wrapper" id="authWrapper">
-      <!-- Sign in button (shown when logged out) -->
-      <button class="auth-btn" id="signInBtn" onclick="handleSignIn()">
-        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        登录
-      </button>
-      <!-- User avatar (shown when logged in) -->
-      <img class="auth-avatar" id="userAvatar" style="display:none" src="" alt="" onclick="toggleAuthDropdown()" />
-      <!-- Dropdown -->
-      <div class="auth-dropdown" id="authDropdown">
-        <div class="auth-user-info">
-          <div class="auth-user-name" id="dropdownName"></div>
-          <div class="auth-user-email" id="dropdownEmail"></div>
-        </div>
-        <button class="auth-signout" onclick="handleSignOut()">退出登录</button>
-      </div>
-    </div>
-  </div>
+  <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
 </header>
 
 <div class="container">
@@ -422,7 +381,9 @@ let recInterval = null;
 let recSeconds = 0;
 let audioChunks = [];
 
-function initAppContent() {
+window.onload = () => {
+  document.addEventListener('invalid', e => e.preventDefault(), true);
+  document.addEventListener('invalid', e => e.preventDefault(), true);
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
     loadCourse(currentCourseId);
@@ -432,16 +393,9 @@ function initAppContent() {
     showEmptyState();
   }
   const zone = document.getElementById('uploadZone');
-  if (zone) {
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
-    zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
-    zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
-  }
-}
-
-window.onload = () => {
-  document.addEventListener('invalid', e => e.preventDefault(), true);
-  // App content init happens inside showMainApp() after auth
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
 };
 
 function getCourse(id) { return courses.find(c => c.id === id); }
@@ -853,168 +807,79 @@ window.addEventListener('load', function() {
 });
 </script>
 
-<!-- ===== GOOGLE AUTH ===== -->
-<script src="https://accounts.google.com/gsi/client"></script>
 <script>
-const AUTH_KEY = 'sm_user';
-const CLIENT_ID = "211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com";
+(function(){
+  var CID = '211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com';
+  var KEY = 'sm_auth_user';
 
-function onGoogleSignIn(response) {
-  const parts = response.credential.split('.');
-  const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-  const user = { name: payload.name, email: payload.email, picture: payload.picture };
-  localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  showApp(user);
-}
-
-function showApp(user) {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  // Update header avatar
-  const signInBtn = document.getElementById('signInBtn');
-  const userAvatar = document.getElementById('userAvatar');
-  if (signInBtn) signInBtn.style.display = 'none';
-  if (userAvatar) {
-    userAvatar.src = user.picture;
-    userAvatar.alt = user.name;
-    userAvatar.style.display = 'block';
-  }
-  const dropName = document.getElementById('dropdownName');
-  const dropEmail = document.getElementById('dropdownEmail');
-  if (dropName) dropName.textContent = user.name;
-  if (dropEmail) dropEmail.textContent = user.email;
-}
-
-function showLogin() {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display = 'none';
-}
-
-function handleSignOut() {
-  localStorage.removeItem(AUTH_KEY);
-  google.accounts.id.disableAutoSelect();
-  document.getElementById('authDropdown').classList.remove('open');
-  showLogin();
-}
-
-function toggleAuthDropdown() {
-  document.getElementById('authDropdown').classList.toggle('open');
-}
-
-document.addEventListener('click', function(e) {
-  const wrapper = document.getElementById('authWrapper');
-  if (wrapper && !wrapper.contains(e.target)) {
-    const dd = document.getElementById('authDropdown');
-    if (dd) dd.classList.remove('open');
-  }
-});
-
-// Init on page load
-window.addEventListener('load', function() {
-  google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback: onGoogleSignIn,
-    auto_select: false,
-    cancel_on_tap_outside: false
-  });
-
-  const saved = localStorage.getItem(AUTH_KEY);
-  if (saved) {
-    try {
-      const user = JSON.parse(saved);
-      showApp(user);
-      return;
-    } catch(e) {}
-  }
-  // Not logged in — show login screen
-  showLogin();
-  // Render Google button
-  google.accounts.id.renderButton(
-    document.getElementById('googleBtnContainer'),
-    { type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', locale: 'zh_CN' }
-  );
-  google.accounts.id.prompt();
-});
-</script>
-</div>
-</div>
-
-<script>
-(function() {
-  var CLIENT_ID = '211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com';
-  var AUTH_KEY = 'sm_user';
-
-  function onGoogleSignIn(resp) {
-    var parts = resp.credential.split('.');
-    var pad = parts[1].replace(/-/g,'+').replace(/_/g,'/');
-    while (pad.length % 4) pad += '=';
-    var user = JSON.parse(atob(pad));
-    var data = {name: user.name, email: user.email, picture: user.picture};
-    localStorage.setItem(AUTH_KEY, JSON.stringify(data));
-    showMainApp(data);
+  function smShowApp(user) {
+    document.getElementById('sm-login-overlay').style.display = 'none';
+    var chip = document.getElementById('sm-user-chip');
+    chip.style.display = 'flex';
+    document.getElementById('sm-user-pic').src = user.picture || '';
+    document.getElementById('sm-user-name').textContent = user.name || '';
+    document.getElementById('sm-user-email').textContent = user.email || '';
   }
 
-  function showMainApp(user) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    if (!window._appReady) { window._appReady = true; initAppContent(); }
-    var av = document.getElementById('userAvatar');
-    var sb = document.getElementById('signInBtn');
-    if (av) { av.src = user.picture; av.alt = user.name; av.style.display = 'block'; }
-    if (sb) sb.style.display = 'none';
-    var dn = document.getElementById('dropdownName');
-    var de = document.getElementById('dropdownEmail');
-    if (dn) dn.textContent = user.name;
-    if (de) de.textContent = user.email;
-  }
-
-  window.handleSignOut = function() {
-    localStorage.removeItem(AUTH_KEY);
+  window.smSignOut = function() {
+    localStorage.removeItem(KEY);
     try { google.accounts.id.disableAutoSelect(); } catch(e){}
-    document.getElementById('authDropdown').classList.remove('open');
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
+    document.getElementById('sm-signout-menu').style.display = 'none';
+    document.getElementById('sm-user-chip').style.display = 'none';
+    document.getElementById('sm-login-overlay').style.display = 'flex';
+    var btn = document.getElementById('sm-google-btn');
+    btn.innerHTML = '';
+    tryRender();
   };
 
   document.addEventListener('click', function(e) {
-    var w = document.getElementById('authWrapper');
-    var d = document.getElementById('authDropdown');
-    if (w && d && !w.contains(e.target)) d.classList.remove('open');
+    var menu = document.getElementById('sm-signout-menu');
+    var chip = document.getElementById('sm-user-chip');
+    if (menu && chip && !chip.contains(e.target) && !menu.contains(e.target)) {
+      menu.style.display = 'none';
+    }
   });
 
-  window.addEventListener('load', function() {
-    // Check saved session first
-    var saved = localStorage.getItem(AUTH_KEY);
-    if (saved) {
-      try {
-        var user = JSON.parse(saved);
-        showMainApp(user);
-        // Still init Google in background for future sign-in
-        if (typeof google !== 'undefined') {
-          google.accounts.id.initialize({client_id: CLIENT_ID, callback: onGoogleSignIn});
+  function onSignIn(resp) {
+    var parts = resp.credential.split('.');
+    var pad = parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    while(pad.length%4) pad+='=';
+    try {
+      var p = JSON.parse(atob(pad));
+      var user = {name:p.name, email:p.email, picture:p.picture};
+      localStorage.setItem(KEY, JSON.stringify(user));
+      smShowApp(user);
+    } catch(e) { alert('登录失败，请重试'); }
+  }
+
+  function tryRender() {
+    if (typeof google !== 'undefined' && google.accounts) {
+      google.accounts.id.initialize({client_id: CID, callback: onSignIn, auto_select: false});
+      google.accounts.id.renderButton(
+        document.getElementById('sm-google-btn'),
+        {type:'standard', theme:'outline', size:'large', locale:'zh_CN'}
+      );
+    } else {
+      setTimeout(tryRender, 300);
+    }
+  }
+
+  // On load: check saved session
+  var saved = localStorage.getItem(KEY);
+  if (saved) {
+    try {
+      smShowApp(JSON.parse(saved));
+      // Init Google silently for future use
+      window.addEventListener('load', function() {
+        if (typeof google !== 'undefined' && google.accounts) {
+          google.accounts.id.initialize({client_id: CID, callback: onSignIn});
         }
-        return;
-      } catch(e) { localStorage.removeItem(AUTH_KEY); }
-    }
-    // No saved session - show login
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
-    // Init Google
-    function tryInitGoogle() {
-      if (typeof google !== 'undefined' && google.accounts) {
-        google.accounts.id.initialize({client_id: CLIENT_ID, callback: onGoogleSignIn, auto_select: false});
-        google.accounts.id.renderButton(
-          document.getElementById('googleBtnContainer'),
-          {type:'standard', theme:'outline', size:'large', text:'signin_with', locale:'zh_CN'}
-        );
-      } else {
-        setTimeout(tryInitGoogle, 200);
-      }
-    }
-    tryInitGoogle();
-  });
+      });
+    } catch(e) { localStorage.removeItem(KEY); tryRender(); }
+  } else {
+    window.addEventListener('load', tryRender);
+  }
 })();
 </script>
 </body>
 </html>
-
