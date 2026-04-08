@@ -174,6 +174,11 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   <div class="sidebar-body" id="courseList"></div>
   <div class="sidebar-footer">
     <button class="btn-add-course" onclick="showNewCourseModal()">＋ 新建课程</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="exportBackup()" style="flex:1;font-size:12px;padding:8px;background:var(--bg);border:1px solid var(--border);">📤 导出备份</button>
+      <button class="btn" onclick="document.getElementById('importBackupInput').click()" style="flex:1;font-size:12px;padding:8px;background:var(--bg);border:1px solid var(--border);">📥 导入备份</button>
+      <input type="file" id="importBackupInput" accept=".json" style="display:none" onchange="importBackup(this)">
+    </div>
   </div>
 </div>
 
@@ -272,6 +277,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
           <div class="upload-icon">📎</div>
           <p><strong>点击上传</strong>或拖拽文件（可多选）</p>
 <p style="margin-top:4px;font-size:12px;">PDF · TXT 直接读取（5MB以下）· 超过5MB请手动粘贴文字</p>
+          <p style="margin-top:6px;font-size:12px;color:var(--muted);">支持 PDF、TXT、Word 文件，最大 20MB</p>
           <div id="pdfTip" style="display:none;margin-top:10px;padding:12px 14px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--ink);line-height:1.9;text-align:left;pointer-events:auto;">
             <strong>Mac：</strong>打开文件 → 顶部菜单「文件」→「导出为 PDF」→ 保存 → 重新上传<br>
             <strong>Windows：</strong>打开文件 → 「文件」→「另存为」→ 格式选「PDF」→ 保存 → 重新上传
@@ -345,6 +351,9 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
         <div class="chat-messages" id="chatMessages">
           <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <button class="opt-btn" style="color:var(--muted);font-size:12px;padding:4px 12px;" onclick="clearChat()">🗑 清空对话</button>
+        </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
           <button class="opt-btn" onclick="quickAsk('请根据课件和录音给我一个详细的课程总结')">📋 课程总结</button>
           <button class="opt-btn" onclick="quickAsk('请生成8-12张Flashcard，格式：正面：英文术语，背面：中文解释加例子')">🗂 Flashcard</button>
@@ -391,9 +400,10 @@ let mediaRecorder = null;
 let recInterval = null;
 let recSeconds = 0;
 let audioChunks = [];
+let _pendingDeleteId = null;
+let _pendingDeleteType = null;
 
 window.onload = () => {
-  document.addEventListener('invalid', e => e.preventDefault(), true);
   document.addEventListener('invalid', e => e.preventDefault(), true);
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
@@ -484,33 +494,103 @@ function saveCourseData() {
 function renameCourse() {
   const course = getCourse(currentCourseId);
   if (!course) return;
-  const name = prompt('新的课程名称：', course.name);
-  if (!name || !name.trim()) return;
-  course.name = name.trim();
+  const modal = document.getElementById('renameModal');
+  const input = document.getElementById('renameInput');
+  input.value = course.name;
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 100);
+}
+function closeRenameModal() {
+  document.getElementById('renameModal').style.display = 'none';
+}
+function confirmRename() {
+  const name = document.getElementById('renameInput').value.trim();
+  if (!name) { return; }
+  const course = getCourse(currentCourseId);
+  if (!course) { closeRenameModal(); return; }
+  course.name = name;
   saveCourses();
   document.getElementById('headerCourseName').textContent = course.name;
   document.getElementById('bannerCourseName').textContent = course.name;
   document.getElementById('floatNotesTitle').textContent = '📝 ' + course.name;
   renderCourseList();
+  closeRenameModal();
   showToast('已重命名 ✓');
 }
 
 function deleteCourse() {
-  if (!confirm('确定删除这节课吗？所有内容将无法恢复。')) return;
-  courses = courses.filter(c => c.id !== currentCourseId);
-  saveCourses();
-  renderCourseList();
-  if (courses.length > 0) loadCourse(courses[0].id);
-  else showEmptyState();
-  showToast('课程已删除');
+  _pendingDeleteId = currentCourseId;
+  _pendingDeleteType = 'current';
+  document.getElementById('deleteModalMsg').textContent = '确定删除这节课吗？所有内容将无法恢复。';
+  document.getElementById('deleteModal').style.display = 'flex';
 }
 
 function deleteCoursById(id) {
-  if (!confirm('删除这节课？')) return;
+  _pendingDeleteId = id;
+  _pendingDeleteType = 'byId';
+  document.getElementById('deleteModalMsg').textContent = '删除这节课？此操作无法撤销。';
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+function _doDeleteCoursById(id) {
   courses = courses.filter(c => c.id !== id);
   saveCourses();
   renderCourseList();
   if (id === currentCourseId) { if (courses.length > 0) loadCourse(courses[0].id); else showEmptyState(); }
+}
+
+function exportBackup() {
+  const backup = { version: 1, exportedAt: new Date().toISOString(), courses };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'studymate-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('备份已导出 ✓');
+}
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.courses || !Array.isArray(backup.courses)) throw new Error('格式错误');
+      courses = backup.courses;
+      saveCourses();
+      renderCourseList();
+      if (courses.length > 0) loadCourse(courses[0].id);
+      else showEmptyState();
+      showToast('备份已导入 ✓，共 ' + courses.length + ' 个课程');
+    } catch(err) {
+      showToast('导入失败：文件格式不正确');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  _pendingDeleteId = null;
+  _pendingDeleteType = null;
+}
+function executeDelete() {
+  closeDeleteModal();
+  if (_pendingDeleteType === 'current') {
+    courses = courses.filter(c => c.id !== currentCourseId);
+    saveCourses();
+    renderCourseList();
+    if (courses.length > 0) loadCourse(courses[0].id);
+    else showEmptyState();
+    showToast('课程已删除');
+  } else if (_pendingDeleteType === 'byId') {
+    _doDeleteCoursById(_pendingDeleteId);
+    showToast('课程已删除');
+  } else if (_pendingDeleteType === 'notes') {
+    _doClearFloatNotes();
+  }
 }
 
 function renderCourseList() {
@@ -537,7 +617,7 @@ function saveFloatNotes() {
   if (!course) return;
   course.notes = document.getElementById('floatNotesArea').value;
   saveCourses();
-  document.getElementById('notesSaveStatus').textContent = '已保存 ✓';
+  const _now = new Date(); const _hh = String(_now.getHours()).padStart(2,'0'); const _mm = String(_now.getMinutes()).padStart(2,'0'); document.getElementById('notesSaveStatus').textContent = '已保存 ' + _hh + ':' + _mm;
   setTimeout(() => document.getElementById('notesSaveStatus').textContent = '自动保存', 4000);
   updateNotesWordCount();
 }
@@ -552,7 +632,8 @@ function insertFloatNote(text) {
   saveFloatNotes();
 }
 
-function clearFloatNotes() { if (!confirm('清空这节课的笔记？')) return; document.getElementById('floatNotesArea').value = ''; saveFloatNotes(); }
+function clearFloatNotes() { _pendingDeleteId = null; _pendingDeleteType = 'notes'; document.getElementById('deleteModalMsg').textContent = '清空这节课的笔记？此操作无法撤销。'; document.getElementById('deleteModal').style.display = 'flex'; }
+function _doClearFloatNotes() { document.getElementById('floatNotesArea').value = ''; saveFloatNotes(); }
 
 async function aiPolishNotes() {
   const notes = document.getElementById('floatNotesArea').value.trim();
@@ -564,6 +645,10 @@ async function aiPolishNotes() {
     saveFloatNotes();
     showToast('笔记整理完成 ✓');
   } catch(e) { showToast('错误：' + e.message); }
+}
+
+function clearChat() {
+  document.getElementById('chatMessages').innerHTML = '<div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>';
 }
 
 function switchTab(name) {
@@ -627,17 +712,51 @@ document.getElementById('parsingHint').style.display = 'none'; }
 function toggleOpt(btn) { btn.classList.toggle('selected'); }
 function getSelectedOpts() { return [...document.querySelectorAll('#panel-prep .opt-btn.selected')].map(b => b.textContent.trim()); }
 
-async function callClaude(messages, systemPrompt) {
-  const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({messages, system:systemPrompt, max_tokens:4000}) });
+async function callClaude(messages, systemPrompt, onChunk) {
+  const useStream = typeof onChunk === 'function';
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, system: systemPrompt, max_tokens: 4000, stream: useStream })
+  });
   if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
-const text = await res.text();
-try {
-  const data = JSON.parse(text);
-  if (!data.content) throw new Error(data.error || '请求失败');
-  return data.content[0].text;
-} catch(e) {
-  throw new Error('服务器错误，请重试');
-}
+
+  if (useStream) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('
+');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            fullText += evt.delta.text;
+            onChunk(evt.delta.text, fullText);
+          }
+        } catch(e) {}
+      }
+    }
+    return fullText;
+  } else {
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      if (!data.content) throw new Error(data.error || '请求失败');
+      return data.content[0].text;
+    } catch(e) {
+      throw new Error('网络出错，请检查网络连接后重试');
+    }
+  }
 }
 
 async function generateStudyMaterial() {
@@ -725,6 +844,7 @@ function stopRecording() {
               } else if (pollData.status === 'error') {
                 throw new Error(pollData.error || '转录失败');
               } else {
+                document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在转写中... (约需30-60秒)</span>';
                 setTimeout(poll, 5000);
               }
             } catch(e) {
@@ -902,6 +1022,31 @@ window.addEventListener('load', function() {
 });
 </script>
 </div>
+
+<!-- Rename Modal -->
+<div class="modal-overlay" id="renameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--paper);border-radius:var(--radius);padding:28px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <div style="font-weight:600;font-size:16px;margin-bottom:16px;">重命名课程</div>
+    <input id="renameInput" type="text" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:16px;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeRenameModal()" style="background:var(--bg);border:1px solid var(--border);">取消</button>
+      <button class="btn btn-primary" onclick="confirmRename()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--paper);border-radius:var(--radius);padding:28px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <div style="font-weight:600;font-size:16px;margin-bottom:10px;">确认删除</div>
+    <div id="deleteModalMsg" style="font-size:14px;color:var(--muted);margin-bottom:20px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeDeleteModal()" style="background:var(--bg);border:1px solid var(--border);">取消</button>
+      <button class="btn" id="deleteConfirmBtn" style="background:#e74c3c;color:#fff;border:none;" onclick="executeDelete()">删除</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
 
