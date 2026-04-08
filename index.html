@@ -1297,6 +1297,8 @@ window.addEventListener('load', function() {
     document.getElementById('sm-user-pic').src = user.picture || '';
     document.getElementById('sm-user-name').textContent = user.name || '';
     document.getElementById('sm-user-email').textContent = user.email || '';
+    // Check for share link after login
+    setTimeout(function() { if (typeof checkShareLink === 'function') checkShareLink(); }, 300);
   }
 
   window.smSignOut = function() {
