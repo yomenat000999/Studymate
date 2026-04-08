@@ -399,6 +399,14 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
       <div id="quizOutput" style="display:none;margin-top:12px;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
     </div>
 
+    <!-- JOINT REVIEW (shows only when both PDF + transcript exist) -->
+    <div class="card" id="jointCard" style="display:none">
+      <div class="card-title"><div class="icon" style="background:#e8f4f1;color:#4a7c6f">🔗</div>智能联合复习</div>
+      <div class="card-sub">结合课件 PDF 与课堂录音，AI 帮你提取考点、老师补充和自学部分</div>
+      <button class="btn btn-primary" id="jointBtn" onclick="runJointReview()" style="margin-bottom:12px">开始联合分析</button>
+      <div id="jointResult" style="display:none;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+    </div>
+
 <button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
 
 <div class="float-notes-panel" id="floatNotesPanel">
@@ -499,6 +507,8 @@ function loadCourse(id) {
   renderFileList();
   updateNotesWordCount();
   document.getElementById('prepResult').style.display = 'none';
+  updateJointVisibility();
+  const jr = document.getElementById('jointResult'); if (jr && course.jointReview) { jr.textContent = course.jointReview; jr.style.display = 'block'; }
   document.getElementById('reviewResult').style.display = 'none';
   document.getElementById('flashcardArea').style.display = 'none';
   if (course.prepResult) {
@@ -519,6 +529,7 @@ function saveCourseData() {
   course.courseText = document.getElementById('courseContentText').value;
   course.transcript = document.getElementById('manualTranscript').value;
   saveCourses();
+  updateJointVisibility();
 }
 
 function renameCourse() {
@@ -690,6 +701,8 @@ async function generateStudyMaterial() {
   btn.disabled = true;
   document.getElementById('genLoading').style.display = 'flex';
   document.getElementById('prepResult').style.display = 'none';
+  updateJointVisibility();
+  const jr = document.getElementById('jointResult'); if (jr && course.jointReview) { jr.textContent = course.jointReview; jr.style.display = 'block'; }
   const msgs = ['AI 正在读取课件内容...', 'AI 正在分析重点...', 'AI 正在生成学习材料...', '即将完成，请稍候...'];
   let mi = 0;
   const loadingEl = document.querySelector('#genLoading span');
@@ -989,6 +1002,93 @@ async function genEssayHelper() {
   } catch(e) { showToast('生成失败'); }
 }
 
+
+function updateJointVisibility() {
+  const course = getCourse(currentCourseId);
+  const card = document.getElementById('jointCard');
+  if (!card) return;
+  const hasPDF = course && course.courseText && course.courseText.trim().length > 100;
+  const hasTranscript = course && course.transcript && course.transcript.trim().length > 100;
+  card.style.display = (hasPDF && hasTranscript) ? 'block' : 'none';
+}
+
+async function runJointReview() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  const btn = document.getElementById('jointBtn');
+  const result = document.getElementById('jointResult');
+  if (btn) { btn.textContent = '分析中...'; btn.disabled = true; }
+  if (result) { result.style.display = 'block'; result.textContent = '⏳ AI 正在联合分析课件和录音，请稍等（约15-30秒）...'; }
+
+  const prompt = `我有一门课的课件内容和课堂录音转写，请帮我做联合分析。
+
+【课件内容】
+${course.courseText.slice(0,3000)}
+
+【课堂录音转写】
+${course.transcript.slice(0,3000)}
+
+请分析并输出：
+
+## 🎯 核心重点（课件+录音双重强调）
+列出3-5个最重要的知识点
+
+## 📢 老师课堂补充（录音独有，课件没有）
+老师额外讲的重要内容
+
+## 📖 建议自学部分（课件有但未详细讲）
+建议课后补充学习的内容
+
+## ❓ 预测考点
+根据老师强调程度，预测3-5个可能出现在考试中的知识点
+
+用中英双语，专业术语保留英文并附中文解释。`;
+
+  try {
+    const res = await callClaude([{role:'user',content:prompt}], '你是专业的留学生学习助手，擅长分析学术内容并提取考试要点。');
+    if (result) result.textContent = res;
+    if (course) { course.jointReview = res; saveCourses(); }
+  } catch(e) {
+    if (result) result.textContent = '分析失败，请稍后重试';
+  } finally {
+    if (btn) { btn.textContent = '重新分析'; btn.disabled = false; }
+  }
+}
+
+function exportBackup() {
+  const data = { version: 1, exportedAt: new Date().toISOString(), courses: courses };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'studymate-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('备份已导出 ✓');
+}
+
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const imported = data.courses || data;
+      if (!Array.isArray(imported)) throw new Error('格式错误');
+      const existing = courses.map(c => c.id);
+      const newCourses = imported.filter(c => !existing.includes(c.id));
+      courses = [...newCourses, ...courses];
+      saveCourses();
+      renderCourseList();
+      showToast('导入成功：' + newCourses.length + ' 门课程 ✓');
+    } catch(err) {
+      showToast('导入失败，请检查文件格式');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 function quickAsk(prompt) {
   const input = document.getElementById('chatInput');
   input.value = prompt;
