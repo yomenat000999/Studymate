@@ -282,6 +282,7 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
       </div>
       <div class="course-banner-actions">
         <button class="btn-sm" onclick="renameCourse()">✏️ 重命名</button>
+        <button class="btn-sm" onclick="shareCourse()" style="background:var(--accent2);color:#fff;border-color:var(--accent2)">🔗 分享</button>
         <button class="btn-sm danger" onclick="deleteCourse()">🗑 删除</button>
       </div>
     </div>
@@ -548,6 +549,83 @@ function saveCourseData() {
   updateJointVisibility();
 }
 
+
+function shareCourse() {
+  const course = getCourse(currentCourseId);
+  if (!course) return;
+  const shareData = {
+    name: course.name,
+    courseText: (course.courseText || '').slice(0, 8000),
+    transcript: (course.transcript || '').slice(0, 8000),
+    notes: course.notes || '',
+    createdAt: course.createdAt
+  };
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareData))));
+    const shareUrl = window.location.origin + '?share=' + encoded;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(() => showToast('🔗 分享链接已复制！发给同学即可查看'));
+    } else {
+      prompt('复制这个链接分享给同学：', shareUrl);
+    }
+  } catch(e) {
+    showToast('分享失败，课程内容可能太长');
+  }
+}
+
+function checkShareLink() {
+  const params = new URLSearchParams(window.location.search);
+  const shareParam = params.get('share');
+  if (!shareParam) return;
+  try {
+    const shareData = JSON.parse(decodeURIComponent(escape(atob(shareParam))));
+    // Show shared course banner
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#4a7c6f;color:#fff;padding:10px 20px;text-align:center;z-index:99998;font-size:14px;display:flex;align-items:center;justify-content:center;gap:12px;';
+    banner.innerHTML = '👀 正在查看同学分享的课程「' + shareData.name + '」<button onclick="importSharedCourse()" style="background:#fff;color:#4a7c6f;border:none;border-radius:99px;padding:4px 12px;font-size:13px;cursor:pointer;margin-left:8px;">保存到我的课程</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;cursor:pointer;margin-left:4px;font-size:16px;">✕</button>';
+    document.body.prepend(banner);
+    // Load shared content into a temp read-only view
+    window._sharedCourse = shareData;
+    const tmpCourse = {
+      id: 'shared_tmp_' + Date.now(),
+      name: '📤 ' + shareData.name + '（共享）',
+      courseText: shareData.courseText || '',
+      transcript: shareData.transcript || '',
+      notes: shareData.notes || '',
+      createdAt: shareData.createdAt || ''
+    };
+    courses.unshift(tmpCourse);
+    renderCourseList();
+    loadCourse(tmpCourse.id);
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch(e) {
+    console.log('Share link parse error:', e);
+  }
+}
+
+function importSharedCourse() {
+  if (!window._sharedCourse) return;
+  const d = window._sharedCourse;
+  const newCourse = {
+    id: 'course_' + Date.now(),
+    name: d.name,
+    courseText: d.courseText || '',
+    transcript: d.transcript || '',
+    notes: d.notes || '',
+    createdAt: d.createdAt || new Date().toLocaleDateString('zh-CN'),
+    prepResult: ''
+  };
+  // Remove temp shared course
+  courses = courses.filter(c => !c.id.startsWith('shared_tmp_'));
+  courses.unshift(newCourse);
+  saveCourses();
+  renderCourseList();
+  loadCourse(newCourse.id);
+  document.querySelector('[style*="4a7c6f"]')?.remove();
+  showToast('✓ 已保存到我的课程');
+  window._sharedCourse = null;
+}
 function renameCourse() {
   const course = getCourse(currentCourseId);
   if (!course) return;
