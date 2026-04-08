@@ -190,6 +190,15 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .subject-arrow.open { transform:rotate(90deg); }
 .subject-courses { padding-left:8px; }
 .subject-tag { display:inline-block; font-size:11px; background:var(--cream); border:1px solid var(--border); border-radius:99px; padding:2px 8px; color:var(--muted); margin-bottom:6px; }
+
+/* === ARTS/SCIENCE MODE === */
+.mode-toggle { display:flex; gap:6px; align-items:center; }
+.mode-btn { padding:5px 12px; border:1px solid var(--border); border-radius:99px; background:none; font-size:12px; font-family:'DM Sans',sans-serif; cursor:pointer; color:var(--muted); transition:all .15s; }
+.mode-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.arts-only { display:none; }
+.science-only { display:none; }
+body.arts-mode .arts-only { display:block; }
+body.science-mode .science-only { display:block; }
 </style>
 
 <!-- GOOGLE AUTH -->
@@ -229,6 +238,15 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .subject-arrow.open { transform:rotate(90deg); }
 .subject-courses { padding-left:8px; }
 .subject-tag { display:inline-block; font-size:11px; background:var(--cream); border:1px solid var(--border); border-radius:99px; padding:2px 8px; color:var(--muted); margin-bottom:6px; }
+
+/* === ARTS/SCIENCE MODE === */
+.mode-toggle { display:flex; gap:6px; align-items:center; }
+.mode-btn { padding:5px 12px; border:1px solid var(--border); border-radius:99px; background:none; font-size:12px; font-family:'DM Sans',sans-serif; cursor:pointer; color:var(--muted); transition:all .15s; }
+.mode-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.arts-only { display:none; }
+.science-only { display:none; }
+body.arts-mode .arts-only { display:block; }
+body.science-mode .science-only { display:block; }
 </style>
 </head>
 <body>
@@ -298,7 +316,11 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
     </div>
     <button class="btn-new-course" onclick="showNewCourseModal()">＋ 新建</button>
   </div>
-  <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
+  <div class="mode-toggle">
+      <button class="mode-btn" id="artsBtn" onclick="setMode('arts')">📚 文科</button>
+      <button class="mode-btn" id="sciBtn" onclick="setMode('science')">🔬 理科</button>
+    </div>
+    <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
 </header>
 
 <div class="container">
@@ -442,6 +464,53 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
             <div id="quizResult" style="display:none;margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:8px;font-size:14px;text-align:center"></div>
           </div>
           <div id="quizOutput" style="display:none;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+
+        <!-- Arts-only tools -->
+        <div class="arts-only" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">📚 文科专属</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+            <button class="opt-btn" onclick="artsFormatCitation()">📜 引用格式化</button>
+            <button class="opt-btn" onclick="artsCompare()">⚖️ 论点对比</button>
+            <button class="opt-btn" onclick="artsCritical()">🔍 批判性框架</button>
+          </div>
+          <div id="artsCitationBox" style="display:none;margin-bottom:12px">
+            <textarea id="artsCitationInput" placeholder="粘贴原文句子..." rows="2" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--paper);box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <select id="citationStyle" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--paper)">
+                <option>Harvard</option><option>APA</option><option>Chicago</option>
+              </select>
+              <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="doFormatCitation()">格式化</button>
+              <button class="btn" style="font-size:13px;padding:7px 12px" onclick="document.getElementById('artsCitationBox').style.display='none'">✕</button>
+            </div>
+          </div>
+          <div id="artsCompareBox" style="display:none;margin-bottom:12px">
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input type="text" id="conceptA" placeholder="概念 A..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--paper)">
+              <input type="text" id="conceptB" placeholder="概念 B..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--paper)">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="doCompare()">生成对比</button>
+              <button class="btn" style="font-size:13px;padding:7px 12px" onclick="document.getElementById('artsCompareBox').style.display='none'">✕</button>
+            </div>
+          </div>
+          <div id="artsCriticalBox" style="display:none;margin-bottom:12px">
+            <input type="text" id="criticalInput" placeholder="输入一个观点或理论..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--paper);box-sizing:border-box;margin-bottom:8px">
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" style="font-size:13px;padding:7px 16px" onclick="doCritical()">生成框架</button>
+              <button class="btn" style="font-size:13px;padding:7px 12px" onclick="document.getElementById('artsCriticalBox').style.display='none'">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Science-only tools -->
+        <div class="science-only" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🔬 理科专属</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="opt-btn" onclick="sciExtractFormulas()">🧮 提取公式</button>
+            <button class="opt-btn" onclick="sciSolveSteps()">📐 解题步骤</button>
+          </div>
+        </div>
+
         </div>
 
         <!-- Joint analysis sub-tab -->
@@ -1247,6 +1316,99 @@ async function genEssayHelper() {
 
 
 
+
+function setMode(mode) {
+  localStorage.setItem('sm_mode', mode);
+  document.body.classList.remove('arts-mode', 'science-mode');
+  document.body.classList.add(mode + '-mode');
+  document.getElementById('artsBtn').classList.toggle('active', mode === 'arts');
+  document.getElementById('sciBtn').classList.toggle('active', mode === 'science');
+}
+
+function initMode() {
+  const saved = localStorage.getItem('sm_mode') || 'arts';
+  setMode(saved);
+}
+
+function artsFormatCitation() {
+  document.getElementById('artsCitationBox').style.display = 'block';
+  document.getElementById('artsCompareBox').style.display = 'none';
+  document.getElementById('artsCriticalBox').style.display = 'none';
+  switchReviewTab('quiz');
+}
+function artsCompare() {
+  document.getElementById('artsCompareBox').style.display = 'block';
+  document.getElementById('artsCitationBox').style.display = 'none';
+  document.getElementById('artsCriticalBox').style.display = 'none';
+  switchReviewTab('quiz');
+}
+function artsCritical() {
+  document.getElementById('artsCriticalBox').style.display = 'block';
+  document.getElementById('artsCitationBox').style.display = 'none';
+  document.getElementById('artsCompareBox').style.display = 'none';
+  switchReviewTab('quiz');
+}
+
+async function doFormatCitation() {
+  const text = document.getElementById('artsCitationInput').value.trim();
+  const style = document.getElementById('citationStyle').value;
+  if (!text) { showToast('请粘贴原文句子'); return; }
+  const out = document.getElementById('quizOutput');
+  out.style.display = 'block'; out.textContent = '⏳ 格式化中...';
+  try {
+    const result = await callClaude(
+      [{role:'user', content:'请将以下内容格式化为' + style + '引用格式，只输出格式化后的引用，不要其他解释：\n\n' + text}],
+      '你是学术引用格式化专家。',
+      chunk => { if (out.textContent === '⏳ 格式化中...') out.textContent = ''; out.textContent += chunk; }
+    );
+  } catch(e) { showToast('格式化失败'); }
+}
+
+async function doCompare() {
+  const a = document.getElementById('conceptA').value.trim();
+  const b = document.getElementById('conceptB').value.trim();
+  if (!a || !b) { showToast('请填写两个概念'); return; }
+  const out = document.getElementById('quizOutput');
+  out.style.display = 'block'; out.textContent = '⏳ 分析中...';
+  const ctx = getContent();
+  const p = '请对比分析「' + a + '」和「' + b + '」：\n1. 相似点\n2. 主要差异\n3. 各自局限性\n4. 在学术讨论中的应用' + (ctx ? '\n\n参考课程内容：\n' + ctx.slice(0,2000) : '') + '\n\n用中英双语，专业术语保留英文。';
+  try {
+    await callClaude([{role:'user',content:p}], '你是学术分析助手。', chunk => { if (out.textContent === '⏳ 分析中...') out.textContent = ''; out.textContent += chunk; });
+  } catch(e) { showToast('分析失败'); }
+}
+
+async function doCritical() {
+  const theory = document.getElementById('criticalInput').value.trim();
+  if (!theory) { showToast('请输入一个观点'); return; }
+  const out = document.getElementById('quizOutput');
+  out.style.display = 'block'; out.textContent = '⏳ 生成框架中...';
+  const p = '请为以下观点/理论生成批判性分析框架：「' + theory + '」\n\n包含：\n1. 支持论据（3条）\n2. 反驳论据（3条）\n3. 学界主要争议\n4. 延伸分析角度\n\n用中英双语，专业术语保留英文。';
+  try {
+    await callClaude([{role:'user',content:p}], '你是批判性思维助手，帮助留学生进行学术分析。', chunk => { if (out.textContent === '⏳ 生成框架中...') out.textContent = ''; out.textContent += chunk; });
+  } catch(e) { showToast('生成失败'); }
+}
+
+async function sciExtractFormulas() {
+  const ctx = getContent();
+  if (!ctx) { showToast('请先上传课件内容'); return; }
+  const out = document.getElementById('quizOutput');
+  out.style.display = 'block'; out.textContent = '⏳ 提取公式中...';
+  switchReviewTab('quiz');
+  try {
+    await callClaude([{role:'user',content:'从以下课程内容提取所有数学/物理/化学公式，解释每个变量的含义和公式适用场景：\n\n' + ctx}], '你是理科学习助手。', chunk => { if (out.textContent === '⏳ 提取公式中...') out.textContent = ''; out.textContent += chunk; });
+  } catch(e) { showToast('提取失败'); }
+}
+
+async function sciSolveSteps() {
+  const problem = prompt('请粘贴题目：');
+  if (!problem || !problem.trim()) return;
+  const out = document.getElementById('quizOutput');
+  out.style.display = 'block'; out.textContent = '⏳ 解题中...';
+  switchReviewTab('quiz');
+  try {
+    await callClaude([{role:'user',content:'请逐步解答以下题目，每步说明原理：\n\n' + problem}], '你是理科解题助手，用清晰的步骤解答，中英双语。', chunk => { if (out.textContent === '⏳ 解题中...') out.textContent = ''; out.textContent += chunk; });
+  } catch(e) { showToast('解题失败'); }
+}
 function switchReviewTab(tab) {
   ['chat','quiz','joint'].forEach(t => {
     document.getElementById('rpanel-'+t).style.display = t===tab ? 'block' : 'none';
@@ -1397,7 +1559,7 @@ window.addEventListener('load', function() {
     document.getElementById('sm-user-name').textContent = user.name || '';
     document.getElementById('sm-user-email').textContent = user.email || '';
     // Check for share link after login
-    setTimeout(function() { if (typeof checkShareLink === 'function') checkShareLink(); }, 300);
+    setTimeout(function() { if (typeof checkShareLink === 'function') checkShareLink(); if (typeof initMode === 'function') initMode(); }, 300);
   }
 
   window.smSignOut = function() {
