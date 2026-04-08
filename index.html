@@ -751,9 +751,12 @@ async function generateStudyMaterial() {
   if (loadingEl) loadingEl.textContent = msgs[0];
   const loadTimer = setInterval(() => { mi=(mi+1)%msgs.length; if(loadingEl) loadingEl.textContent=msgs[mi]; }, 2500);
   try {
-    const result = await callClaude([{ role:'user', content:`请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念，专业术语保留英文并用中文解释。` }], `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料。`);
-    document.getElementById('prepResultContent').textContent = result;
+    const prepDiv = document.getElementById('prepResultContent');
     document.getElementById('prepResult').style.display = 'block';
+    if (prepDiv) prepDiv.textContent = '';
+    const result = await callClaude([{ role:'user', content:`请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念，专业术语保留英文并用中文解释。` }], `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料。`, (chunk) => {
+      if (prepDiv) prepDiv.textContent += chunk;
+    });
     const course = getCourse(currentCourseId);
     if (course) { course.prepResult = result; saveCourses(); }
     showToast('生成完成 ✓');
@@ -1107,8 +1110,11 @@ ${course.transcript.slice(0,3000)}
 用中英双语，专业术语保留英文并附中文解释。`;
 
   try {
-    const res = await callClaude([{role:'user',content:prompt}], '你是专业的留学生学习助手，擅长分析学术内容并提取考试要点。');
-    if (result) result.textContent = res;
+    const jointRes = document.getElementById('jointResult');
+    if (jointRes) { jointRes.style.display='block'; jointRes.textContent=''; }
+    const res = await callClaude([{role:'user',content:prompt}], '你是专业的留学生学习助手，擅长分析学术内容并提取考试要点。', (chunk) => {
+      if (jointRes) jointRes.textContent += chunk;
+    });
     if (course) { course.jointReview = res; saveCourses(); }
   } catch(e) {
     if (result) result.textContent = '分析失败，请稍后重试';
