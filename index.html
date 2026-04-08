@@ -181,6 +181,15 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .quiz-feedback.wrong{background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b}
 .quiz-all-exp{margin-top:8px;padding:10px 14px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6}
 .quiz-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+
+/* === SUBJECT GROUPS === */
+.subject-group { margin-bottom: 4px; }
+.subject-header { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; user-select:none; }
+.subject-header:hover { color:var(--ink); }
+.subject-arrow { font-size:10px; transition:transform .2s; }
+.subject-arrow.open { transform:rotate(90deg); }
+.subject-courses { padding-left:8px; }
+.subject-tag { display:inline-block; font-size:11px; background:var(--cream); border:1px solid var(--border); border-radius:99px; padding:2px 8px; color:var(--muted); margin-bottom:6px; }
 </style>
 
 <!-- GOOGLE AUTH -->
@@ -211,6 +220,15 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .quiz-feedback.wrong{background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b}
 .quiz-all-exp{margin-top:8px;padding:10px 14px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6}
 .quiz-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+
+/* === SUBJECT GROUPS === */
+.subject-group { margin-bottom: 4px; }
+.subject-header { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; user-select:none; }
+.subject-header:hover { color:var(--ink); }
+.subject-arrow { font-size:10px; transition:transform .2s; }
+.subject-arrow.open { transform:rotate(90deg); }
+.subject-courses { padding-left:8px; }
+.subject-tag { display:inline-block; font-size:11px; background:var(--cream); border:1px solid var(--border); border-radius:99px; padding:2px 8px; color:var(--muted); margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -254,8 +272,15 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 <div class="modal-overlay" id="newCourseModal">
   <div class="modal">
     <h2>新建课程</h2>
-    <p>给这节课起个名字，比如「Week 3 - Marketing策略」</p>
-   <input type="text" id="newCourseName" placeholder="课程名称..." maxlength="50" onkeydown="if(event.key==='Enter')createCourse()" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate/>
+    <div style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">科目名称</label>
+      <input type="text" id="newSubjectName" placeholder="例如：Economics / 宏观经济学..." maxlength="50" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--paper)"/>
+      <div id="subjectSuggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">课程名称（可选，默认用日期）</label>
+      <input type="text" id="newCourseName" placeholder="例如：Week 3 / 第4课 / 期中复习..." maxlength="50" onkeydown="if(event.key==='Enter')createCourse()" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box;background:var(--paper)"/>
+    </div>
     <div class="modal-btns">
       <button class="btn btn-primary" onclick="createCourse()">创建</button>
       <button class="btn" style="background:var(--cream);color:var(--ink);" onclick="closeNewCourseModal()">取消</button>
@@ -496,18 +521,30 @@ function showEmptyState() {
 
 function showNewCourseModal() {
   document.getElementById('newCourseModal').classList.add('open');
-  setTimeout(() => document.getElementById('newCourseName').focus(), 100);
+  // Show existing subjects as suggestions
+  const subjects = [...new Set(courses.filter(c=>c.subject).map(c=>c.subject))];
+  const sg = document.getElementById('subjectSuggestions');
+  sg.innerHTML = subjects.map(s =>
+    '<button onclick="document.getElementById(\'newSubjectName\').value=\''+s+'\';this.parentElement.querySelectorAll(\'button\').forEach(b=>b.style.background=\'\');this.style.background=\'var(--accent)\';this.style.color=\'#fff\';" style="padding:4px 10px;border:1px solid var(--border);border-radius:99px;background:var(--cream);font-size:12px;cursor:pointer;font-family:inherit;">'+s+'</button>'
+  ).join('');
+  setTimeout(() => document.getElementById('newSubjectName').focus(), 100);
 }
 
 function closeNewCourseModal() {
   document.getElementById('newCourseModal').classList.remove('open');
   document.getElementById('newCourseName').value = '';
+  document.getElementById('newSubjectName').value = '';
+  document.getElementById('subjectSuggestions').innerHTML = '';
 }
 
 function createCourse() {
-  const name = document.getElementById('newCourseName').value.trim();
-  if (!name) { showToast('请输入课程名称'); return; }
-  const course = { id: 'course_' + Date.now(), name, createdAt: new Date().toLocaleDateString('zh-CN'), courseText: '', transcript: '', notes: '', prepResult: '' };
+  const subject = document.getElementById('newSubjectName').value.trim();
+  if (!subject) { showToast('请输入科目名称'); document.getElementById('newSubjectName').focus(); return; }
+  const rawName = document.getElementById('newCourseName').value.trim();
+  const today = new Date();
+  const dateStr = (today.getMonth()+1) + '月' + today.getDate() + '日';
+  const name = rawName || dateStr + ' 的课';
+  const course = { id: 'course_' + Date.now(), name, subject: subject, createdAt: new Date().toLocaleDateString('zh-CN'), courseText: '', transcript: '', notes: '', prepResult: '' };
   courses.unshift(course);
   saveCourses();
   closeNewCourseModal();
@@ -525,7 +562,7 @@ function loadCourse(id) {
   document.getElementById('courseContent').style.display = 'block';
   document.getElementById('headerCourseName').textContent = course.name;
   document.getElementById('bannerCourseName').textContent = course.name;
-  document.getElementById('bannerCourseDate').textContent = '创建于 ' + course.createdAt;
+  document.getElementById('bannerCourseDate').textContent = (course.subject ? course.subject + ' · ' : '') + '创建于 ' + course.createdAt;
   document.getElementById('courseContentText').value = course.courseText || '';
   document.getElementById('manualTranscript').value = course.transcript || '';
   document.getElementById('floatNotesArea').value = course.notes || '';
@@ -670,16 +707,64 @@ function deleteCoursById(id) {
 
 function renderCourseList() {
   const list = document.getElementById('courseList');
-  if (!courses.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">还没有课程</div>'; return; }
-  list.innerHTML = courses.map(c => `
-    <div class="course-item ${c.id === currentCourseId ? 'active' : ''}" onclick="loadCourse('${c.id}')">
-      <div class="course-item-icon">📚</div>
-      <div class="course-item-info">
-        <div class="course-item-name">${c.name}</div>
-        <div class="course-item-sub">${c.createdAt}</div>
+  if (!courses.length) { list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">还没有课程<br><button class="btn btn-primary" style="margin-top:12px;font-size:13px;" onclick="closeSidebar();showNewCourseModal()">＋ 新建课程</button></div>'; return; }
+
+  // Group by subject
+  const groups = {};
+  const noSubject = [];
+  courses.forEach(c => {
+    if (c.subject) {
+      if (!groups[c.subject]) groups[c.subject] = [];
+      groups[c.subject].push(c);
+    } else {
+      noSubject.push(c);
+    }
+  });
+
+  let html = '';
+  // Render grouped courses
+  Object.entries(groups).forEach(([subject, subCourses]) => {
+    const isOpen = subCourses.some(c => c.id === currentCourseId) || subCourses.length <= 3;
+    html += `<div class="subject-group">
+      <div class="subject-header" onclick="toggleSubject(this)">
+        <span class="subject-arrow ${isOpen ? 'open' : ''}">▶</span>
+        <span>📁 ${subject}</span>
+        <span style="margin-left:auto;font-size:11px;font-weight:400">${subCourses.length}节</span>
       </div>
-      <button class="course-item-del" onclick="event.stopPropagation();deleteCoursById('${c.id}')">×</button>
-    </div>`).join('');
+      <div class="subject-courses" style="display:${isOpen ? 'block' : 'none'}">
+        ${subCourses.map(c => `
+          <div class="course-item ${c.id === currentCourseId ? 'active' : ''}" onclick="loadCourse('${c.id}')">
+            <div class="course-item-icon">📄</div>
+            <div class="course-item-info">
+              <div class="course-item-name">${c.name}</div>
+              <div class="course-item-sub">${c.createdAt}</div>
+            </div>
+            <button class="course-item-del" onclick="event.stopPropagation();deleteCoursById('${c.id}')">×</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  // Ungrouped courses (legacy, no subject)
+  if (noSubject.length) {
+    html += noSubject.map(c => `
+      <div class="course-item ${c.id === currentCourseId ? 'active' : ''}" onclick="loadCourse('${c.id}')">
+        <div class="course-item-icon">📚</div>
+        <div class="course-item-info">
+          <div class="course-item-name">${c.name}</div>
+          <div class="course-item-sub">${c.createdAt}</div>
+        </div>
+        <button class="course-item-del" onclick="event.stopPropagation();deleteCoursById('${c.id}')">×</button>
+      </div>`).join('');
+  }
+  list.innerHTML = html;
+}
+
+function toggleSubject(header) {
+  const arrow = header.querySelector('.subject-arrow');
+  const courses_div = header.nextElementSibling;
+  const isOpen = arrow.classList.contains('open');
+  arrow.classList.toggle('open', !isOpen);
+  courses_div.style.display = isOpen ? 'none' : 'block';
 }
 
 function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); }
