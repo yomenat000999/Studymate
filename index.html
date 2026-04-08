@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyMate · 留学生AI学习助手</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -190,6 +189,22 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   </div>
 </div>
 
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:none; position:fixed; inset:0; background:var(--paper); z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:24px;">
+  <div style="text-align:center;">
+    <div style="font-family:'DM Serif Display',serif; font-size:36px; color:var(--ink); margin-bottom:8px;">Study<span style="color:var(--accent)">Mate</span></div>
+    <div style="color:var(--muted); font-size:15px;">留学生 AI 学习助手</div>
+  </div>
+  <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px 40px; text-align:center; max-width:360px; width:90%;">
+    <div style="font-size:40px; margin-bottom:16px;">📚</div>
+    <h2 style="font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:8px;">开始使用</h2>
+    <p style="color:var(--muted); font-size:14px; margin-bottom:24px; line-height:1.6;">登录后即可使用 AI 学习助手<br>管理课程、整理笔记、生成复习材料</p>
+    <div id="googleBtnContainer" style="display:flex; justify-content:center;"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none;">
 <header>
   <div class="logo">Study<span>Mate</span></div>
   <div class="header-center">
@@ -804,62 +819,47 @@ window.addEventListener('load', function() {
 </script>
 
 <!-- ===== GOOGLE AUTH ===== -->
-<div id="g_id_onload"
-  data-client_id="211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com"
-  data-callback="onGoogleSignIn"
-  data-auto_prompt="false">
-</div>
-<!-- Hidden Google button (used as trigger) -->
-<div id="g_id_signin" style="display:none"></div>
-
+<script src="https://accounts.google.com/gsi/client"></script>
 <script>
 const AUTH_KEY = 'sm_user';
-let googleReady = false;
+const CLIENT_ID = "211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com";
 
 function onGoogleSignIn(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  const parts = response.credential.split('.');
+  const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
   const user = { name: payload.name, email: payload.email, picture: payload.picture };
   localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  updateAuthUI(user);
+  showApp(user);
 }
 
-function updateAuthUI(user) {
+function showApp(user) {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  // Update header avatar
   const signInBtn = document.getElementById('signInBtn');
   const userAvatar = document.getElementById('userAvatar');
-  if (user) {
-    signInBtn.style.display = 'none';
+  if (signInBtn) signInBtn.style.display = 'none';
+  if (userAvatar) {
     userAvatar.src = user.picture;
     userAvatar.alt = user.name;
     userAvatar.style.display = 'block';
-    document.getElementById('dropdownName').textContent = user.name;
-    document.getElementById('dropdownEmail').textContent = user.email;
-  } else {
-    signInBtn.style.display = 'flex';
-    userAvatar.style.display = 'none';
   }
+  const dropName = document.getElementById('dropdownName');
+  const dropEmail = document.getElementById('dropdownEmail');
+  if (dropName) dropName.textContent = user.name;
+  if (dropEmail) dropEmail.textContent = user.email;
 }
 
-function handleSignIn() {
-  if (!googleReady) {
-    alert('Google 登录正在加载，请稍后再试');
-    return;
-  }
-  // Render a real Google button and click it
-  const container = document.getElementById('g_id_signin');
-  container.innerHTML = '';
-  google.accounts.id.renderButton(container, {
-    type: 'standard', theme: 'outline', size: 'large'
-  });
-  const btn = container.querySelector('div[role=button]');
-  if (btn) { btn.click(); }
-  else { google.accounts.id.prompt(); }
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
 }
 
 function handleSignOut() {
   localStorage.removeItem(AUTH_KEY);
-  if (googleReady) google.accounts.id.disableAutoSelect();
-  updateAuthUI(null);
+  google.accounts.id.disableAutoSelect();
   document.getElementById('authDropdown').classList.remove('open');
+  showLogin();
 }
 
 function toggleAuthDropdown() {
@@ -874,40 +874,34 @@ document.addEventListener('click', function(e) {
   }
 });
 
-function initGoogleAuth() {
+// Init on page load
+window.addEventListener('load', function() {
   google.accounts.id.initialize({
-    client_id:  + CLIENT_ID + ,
+    client_id: CLIENT_ID,
     callback: onGoogleSignIn,
     auto_select: false,
     cancel_on_tap_outside: false
   });
-  googleReady = true;
-  // Restore saved session
+
   const saved = localStorage.getItem(AUTH_KEY);
   if (saved) {
-    try { updateAuthUI(JSON.parse(saved)); } catch(e) {}
+    try {
+      const user = JSON.parse(saved);
+      showApp(user);
+      return;
+    } catch(e) {}
   }
-}
-
-// Wait for Google script to load
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() {
-    const checkGoogle = setInterval(function() {
-      if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(checkGoogle);
-        initGoogleAuth();
-      }
-    }, 100);
-  });
-} else {
-  const checkGoogle = setInterval(function() {
-    if (typeof google !== 'undefined' && google.accounts) {
-      clearInterval(checkGoogle);
-      initGoogleAuth();
-    }
-  }, 100);
-}
+  // Not logged in — show login screen
+  showLogin();
+  // Render Google button
+  google.accounts.id.renderButton(
+    document.getElementById('googleBtnContainer'),
+    { type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', locale: 'zh_CN' }
+  );
+  google.accounts.id.prompt();
+});
 </script>
+</div>
 </body>
 </html>
 
