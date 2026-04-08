@@ -558,6 +558,10 @@ function loadCourse(id) {
   if (!course) return;
   currentCourseId = id;
   localStorage.setItem('sm_currentCourse', id);
+  // Update active highlight without re-rendering entire list
+  document.querySelectorAll('.course-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.querySelector('.course-item[onclick*="' + id + '"]');
+  if (activeEl) activeEl.classList.add('active');
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('courseContent').style.display = 'block';
   document.getElementById('headerCourseName').textContent = course.name;
