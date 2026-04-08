@@ -148,6 +148,23 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
   .tab { font-size: 12px; padding: 8px 8px; }
   .float-notes-panel { right: 12px; width: calc(100vw - 24px); }
 }
+
+/* === QUIZ === */
+.quiz-area{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.quiz-q{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:background .15s,border-color .15s;text-align:left;line-height:1.4}
+.quiz-opt:hover{border-color:var(--accent);background:#fdf3f1}
+.quiz-opt.correct{border-color:#4a7c6f;background:#f0f7f5;cursor:default}
+.quiz-opt.wrong{border-color:#e74c3c;background:#fdf0f0;cursor:default}
+.quiz-opt.revealed{cursor:default;opacity:.7}
+.quiz-opt-label{font-weight:600;flex-shrink:0;color:var(--muted)}
+.quiz-feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5}
+.quiz-feedback.correct{background:#f0f7f5;border:1px solid #4a7c6f;color:#2d5a4f}
+.quiz-feedback.wrong{background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b}
+.quiz-all-exp{margin-top:8px;padding:10px 14px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6}
+.quiz-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 </style>
 
 <!-- GOOGLE AUTH -->
@@ -161,6 +178,23 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 .sm-signout-info{padding:8px 12px;font-size:13px;color:#7a7568;border-bottom:1px solid #d4cfc4;margin-bottom:4px}
 .sm-signout-btn{width:100%;padding:8px 12px;background:none;border:none;border-radius:6px;text-align:left;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;color:#1a1a2e}
 .sm-signout-btn:hover{background:#ede8dc}
+
+/* === QUIZ === */
+.quiz-area{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.quiz-q{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:12px;line-height:1.5}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;background:#fff;transition:background .15s,border-color .15s;text-align:left;line-height:1.4}
+.quiz-opt:hover{border-color:var(--accent);background:#fdf3f1}
+.quiz-opt.correct{border-color:#4a7c6f;background:#f0f7f5;cursor:default}
+.quiz-opt.wrong{border-color:#e74c3c;background:#fdf0f0;cursor:default}
+.quiz-opt.revealed{cursor:default;opacity:.7}
+.quiz-opt-label{font-weight:600;flex-shrink:0;color:var(--muted)}
+.quiz-feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5}
+.quiz-feedback.correct{background:#f0f7f5;border:1px solid #4a7c6f;color:#2d5a4f}
+.quiz-feedback.wrong{background:#fdf0f0;border:1px solid #e74c3c;color:#c0392b}
+.quiz-all-exp{margin-top:8px;padding:10px 14px;background:var(--cream);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.6}
+.quiz-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -345,17 +379,24 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
           <button class="btn btn-primary" onclick="sendChat()">发送</button>
           <button class="btn" onclick="clearChat()" title="清空对话" style="flex-shrink:0;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:99px;color:var(--muted);font-size:13px;cursor:pointer;">🗑</button>
         </div>
-        <!-- EXAM BANK & VOCAB -->
-        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:10px;">📝 一键生成复习材料</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            <button class="opt-btn" onclick="genExam('mc')">📋 选择题（5题）</button>
-            <button class="opt-btn" onclick="genExam('sa')">✍️ 简答题（3题）</button>
-            <button class="opt-btn" onclick="genExam('vocab')">📖 词汇表</button>
-            <button class="opt-btn" onclick="genEssayHelper()">✒️ Essay 辅助</button>
-          </div>
-        </div>
       </div>
+    </div>
+
+    <!-- QUIZ SECTION (separate card) -->
+    <div class="card" id="quizCard">
+      <div class="card-title"><div class="icon icon-accent">📝</div>练习题 & 复习材料</div>
+      <div class="card-sub">生成互动选择题，选完即时反馈解析</div>
+      <div class="quiz-toolbar">
+        <button class="opt-btn" onclick="genInteractiveQuiz()">🎯 生成选择题（5题）</button>
+        <button class="opt-btn" onclick="genExam('sa')">✍️ 简答题（3题）</button>
+        <button class="opt-btn" onclick="genExam('vocab')">📖 生成词汇表</button>
+        <button class="opt-btn" onclick="genEssayHelper()">✒️ Essay 辅助</button>
+      </div>
+      <div id="quizContainer" style="display:none">
+        <div id="quizList" class="quiz-area"></div>
+        <div id="quizResult" style="display:none;margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:8px;font-size:14px;text-align:center"></div>
+      </div>
+      <div id="quizOutput" style="display:none;margin-top:12px;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
     </div>
 
 <button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
@@ -802,16 +843,137 @@ async function genExam(type) {
   const ctx = getContent();
   if (!ctx) { showToast('请先上传课件或录音内容'); return; }
   const prompts = {
-    mc: '根据以下课程内容，生成5道选择题。每题含题目、4个选项(A/B/C/D)和答案解析。用中英双语，专业术语保留英文。\n\n' + ctx,
     sa: '根据以下课程内容，生成3道简答题，每题含参考答案。用中英双语。\n\n' + ctx,
-    vocab: '从以下课程内容提取10-15个重要专业词汇，以表格形式输出（英文词汇 | 中文解释 | 例句）。\n\n' + ctx
+    vocab: '从以下课程内容提取10-15个重要专业词汇，以表格形式输出：\n| 英文词汇 | 中文解释 | 例句 |\n\n' + ctx
   };
   showToast('AI 生成中...');
+  const out = document.getElementById('quizOutput');
+  const qc = document.getElementById('quizContainer');
+  if (qc) qc.style.display = 'none';
+  if (out) { out.style.display = 'block'; out.textContent = '⏳ 生成中...'; }
   try {
     const result = await callClaude([{role:'user',content:prompts[type]}], '你是留学生学习助手，用中英双语生成学习材料。');
-    addMsg('ai', result);
-    setTimeout(()=>{ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
-  } catch(e) { showToast('生成失败'); }
+    if (out) out.textContent = result;
+  } catch(e) {
+    if (out) out.textContent = '';
+    showToast('生成失败，请稍后重试');
+  }
+}
+
+async function genInteractiveQuiz() {
+  const ctx = getContent();
+  if (!ctx) { showToast('请先上传课件或录音内容'); return; }
+  const out = document.getElementById('quizOutput');
+  const qc = document.getElementById('quizContainer');
+  const ql = document.getElementById('quizList');
+  const qr = document.getElementById('quizResult');
+  if (out) out.style.display = 'none';
+  if (qc) { qc.style.display = 'block'; }
+  if (ql) ql.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">⏳ AI 生成选择题中，请稍候...</div>';
+  if (qr) qr.style.display = 'none';
+
+  const prompt = `根据以下课程内容，生成5道选择题。
+严格按照以下JSON格式输出，不要有任何其他文字：
+[
+  {
+    "q": "题目（中英双语）",
+    "opts": {"A":"选项A内容","B":"选项B内容","C":"选项C内容","D":"选项D内容"},
+    "answer": "A",
+    "explanations": {"A":"A选项解析","B":"B选项解析","C":"C选项解析","D":"D选项解析"},
+    "correct_reason": "为什么正确答案是对的"
+  }
+]
+
+课程内容：
+${ctx.slice(0,4000)}`;
+
+  try {
+    const raw = await callClaude([{role:'user',content:prompt}], '你是出题专家，严格按JSON格式输出，不要有任何额外文字。');
+    // Parse JSON from response
+    const jsonMatch = raw.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (!jsonMatch) throw new Error('格式错误');
+    const questions = JSON.parse(jsonMatch[0]);
+    renderQuiz(questions);
+  } catch(e) {
+    if (ql) ql.innerHTML = '<div style="padding:16px;color:#e74c3c">生成失败，请重试。如果持续失败，请先确认课件中有足够文字内容。</div>';
+  }
+}
+
+function renderQuiz(questions) {
+  const ql = document.getElementById('quizList');
+  const qr = document.getElementById('quizResult');
+  if (!ql) return;
+  window._quizAnswers = new Array(questions.length).fill(null);
+  window._quizQuestions = questions;
+  ql.innerHTML = questions.map((q, qi) => `
+    <div class="quiz-card" id="qcard-${qi}">
+      <div class="quiz-q">${qi+1}. ${q.q}</div>
+      <div class="quiz-opts">
+        ${Object.entries(q.opts).map(([k,v]) => `
+          <button class="quiz-opt" id="qopt-${qi}-${k}" onclick="answerQuiz(${qi},'${k}')">
+            <span class="quiz-opt-label">${k}</span>
+            <span>${v}</span>
+          </button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="qfb-${qi}" style="display:none"></div>
+      <div class="quiz-all-exp" id="qexp-${qi}" style="display:none"></div>
+    </div>`).join('');
+  if (qr) qr.style.display = 'none';
+}
+
+function answerQuiz(qi, chosen) {
+  const q = window._quizQuestions[qi];
+  if (window._quizAnswers[qi]) return; // already answered
+  window._quizAnswers[qi] = chosen;
+  const isCorrect = chosen === q.answer;
+
+  // Style the chosen option
+  const chosenBtn = document.getElementById('qopt-' + qi + '-' + chosen);
+  if (chosenBtn) chosenBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+
+  // If wrong, highlight correct answer
+  if (!isCorrect) {
+    const correctBtn = document.getElementById('qopt-' + qi + '-' + q.answer);
+    if (correctBtn) correctBtn.classList.add('correct');
+  }
+
+  // Disable all other options
+  ['A','B','C','D'].forEach(k => {
+    const btn = document.getElementById('qopt-' + qi + '-' + k);
+    if (btn && k !== chosen && k !== q.answer) btn.classList.add('revealed');
+  });
+
+  // Show feedback
+  const fb = document.getElementById('qfb-' + qi);
+  if (fb) {
+    fb.style.display = 'block';
+    fb.className = 'quiz-feedback ' + (isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) {
+      fb.innerHTML = '✅ 正确！' + (q.correct_reason || q.explanations[q.answer] || '');
+    } else {
+      fb.innerHTML = '❌ 不对，正确答案是 <strong>' + q.answer + '</strong>。<br>' + (q.explanations[chosen] || '') + '<br><br><strong>正确答案解析：</strong>' + (q.correct_reason || q.explanations[q.answer] || '');
+    }
+  }
+
+  // Show all explanations
+  const exp = document.getElementById('qexp-' + qi);
+  if (exp && !isCorrect) {
+    exp.style.display = 'block';
+    exp.innerHTML = '<strong>所有选项解析：</strong><br>' +
+      Object.entries(q.explanations).map(([k,v]) => '<strong>' + k + ':</strong> ' + v).join('<br>');
+  }
+
+  // Check if all answered
+  const allDone = window._quizAnswers.every(a => a !== null);
+  if (allDone) {
+    const score = window._quizAnswers.filter((a,i) => a === window._quizQuestions[i].answer).length;
+    const qr = document.getElementById('quizResult');
+    if (qr) {
+      qr.style.display = 'block';
+      qr.innerHTML = '🎯 答题完成！得分：<strong>' + score + ' / ' + window._quizQuestions.length + '</strong>' +
+        (score === window._quizQuestions.length ? ' 🎉 全对！' : score >= 3 ? ' 👍 不错！' : ' 📖 建议再复习一下');
+    }
+  }
 }
 
 async function genEssayHelper() {
