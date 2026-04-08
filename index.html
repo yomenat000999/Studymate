@@ -383,7 +383,6 @@ let audioChunks = [];
 
 window.onload = () => {
   document.addEventListener('invalid', e => e.preventDefault(), true);
-  document.addEventListener('invalid', e => e.preventDefault(), true);
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
     loadCourse(currentCourseId);
@@ -526,7 +525,7 @@ function saveFloatNotes() {
   if (!course) return;
   course.notes = document.getElementById('floatNotesArea').value;
   saveCourses();
-  document.getElementById('notesSaveStatus').textContent = '已保存 ✓';
+  var now=new Date();document.getElementById('notesSaveStatus').textContent='已保存 '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   setTimeout(() => document.getElementById('notesSaveStatus').textContent = '自动保存', 4000);
   updateNotesWordCount();
 }
@@ -622,7 +621,7 @@ async function callClaude(messages, systemPrompt) {
 const text = await res.text();
 try {
   const data = JSON.parse(text);
-  if (!data.content) throw new Error(data.error || '请求失败');
+  if (!data.content) throw new Error(data.error || '网络出错，请检查网络连接后重试');
   return data.content[0].text;
 } catch(e) {
   throw new Error('服务器错误，请重试');
