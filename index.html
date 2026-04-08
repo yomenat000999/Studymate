@@ -809,14 +809,16 @@ window.addEventListener('load', function() {
   data-callback="onGoogleSignIn"
   data-auto_prompt="false">
 </div>
+<!-- Hidden Google button (used as trigger) -->
+<div id="g_id_signin" style="display:none"></div>
 
 <script>
 const AUTH_KEY = 'sm_user';
+let googleReady = false;
 
 function onGoogleSignIn(response) {
-  // Decode JWT payload
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  const user = { name: payload.name, email: payload.email, picture: payload.picture, token: response.credential };
+  const user = { name: payload.name, email: payload.email, picture: payload.picture };
   localStorage.setItem(AUTH_KEY, JSON.stringify(user));
   updateAuthUI(user);
 }
@@ -838,12 +840,24 @@ function updateAuthUI(user) {
 }
 
 function handleSignIn() {
-  google.accounts.id.prompt();
+  if (!googleReady) {
+    alert('Google 登录正在加载，请稍后再试');
+    return;
+  }
+  // Render a real Google button and click it
+  const container = document.getElementById('g_id_signin');
+  container.innerHTML = '';
+  google.accounts.id.renderButton(container, {
+    type: 'standard', theme: 'outline', size: 'large'
+  });
+  const btn = container.querySelector('div[role=button]');
+  if (btn) { btn.click(); }
+  else { google.accounts.id.prompt(); }
 }
 
 function handleSignOut() {
   localStorage.removeItem(AUTH_KEY);
-  google.accounts.id.disableAutoSelect();
+  if (googleReady) google.accounts.id.disableAutoSelect();
   updateAuthUI(null);
   document.getElementById('authDropdown').classList.remove('open');
 }
@@ -852,7 +866,6 @@ function toggleAuthDropdown() {
   document.getElementById('authDropdown').classList.toggle('open');
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
   const wrapper = document.getElementById('authWrapper');
   if (wrapper && !wrapper.contains(e.target)) {
@@ -861,21 +874,39 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Restore session on load
-window.addEventListener('load', function() {
+function initGoogleAuth() {
+  google.accounts.id.initialize({
+    client_id:  + CLIENT_ID + ,
+    callback: onGoogleSignIn,
+    auto_select: false,
+    cancel_on_tap_outside: false
+  });
+  googleReady = true;
+  // Restore saved session
   const saved = localStorage.getItem(AUTH_KEY);
   if (saved) {
     try { updateAuthUI(JSON.parse(saved)); } catch(e) {}
   }
-  // Initialize Google Sign In
-  if (typeof google !== 'undefined') {
-    google.accounts.id.initialize({
-      client_id:  + CLIENT_ID + ,
-      callback: onGoogleSignIn,
-      auto_select: false
-    });
-  }
-});
+}
+
+// Wait for Google script to load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    const checkGoogle = setInterval(function() {
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(checkGoogle);
+        initGoogleAuth();
+      }
+    }, 100);
+  });
+} else {
+  const checkGoogle = setInterval(function() {
+    if (typeof google !== 'undefined' && google.accounts) {
+      clearInterval(checkGoogle);
+      initGoogleAuth();
+    }
+  }, 100);
+}
 </script>
 </body>
 </html>
