@@ -363,48 +363,58 @@ select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
 
  <div class="panel" id="panel-review">
       <div class="card">
-        <div class="card-title"><div class="icon icon-green">💬</div>课后复习 & 问 AI</div>
-        <div class="card-sub">AI 结合课件和录音内容回答你的问题</div>
-        <div class="chat-messages" id="chatMessages">
-          <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
+        <!-- Sub-tab nav -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);">
+          <button class="rtab active" id="rtab-chat" onclick="switchReviewTab('chat')" style="flex:1;padding:10px;background:none;border:none;border-bottom:2px solid var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink);">💬 AI 问答</button>
+          <button class="rtab" id="rtab-quiz" onclick="switchReviewTab('quiz')" style="flex:1;padding:10px;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);">📝 练习题</button>
+          <button class="rtab" id="rtab-joint" onclick="switchReviewTab('joint')" style="flex:1;padding:10px;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);" id="rtab-joint">🔗 联合分析</button>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-          <button class="opt-btn" onclick="quickAsk('请根据课件和录音给我一个详细的课程总结')">📋 课程总结</button>
-          <button class="opt-btn" onclick="quickAsk('请生成8-12张Flashcard，格式：正面：英文术语，背面：中文解释加例子')">🗂 Flashcard</button>
-          <button class="opt-btn" onclick="quickAsk('请生成5道练习题并附上答案')">❓ 练习题</button>
-          <button class="opt-btn" onclick="quickAsk('请生成这节课的知识框架')">🗺 知识框架</button>
-        </div>
-        <div class="chat-input-row">
-          <textarea id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" rows="1" style="flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:99px;background:var(--paper);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);resize:none;line-height:1.4;overflow:hidden;"></textarea>
-          <button class="btn btn-primary" onclick="sendChat()">发送</button>
-          <button class="btn" onclick="clearChat()" title="清空对话" style="flex-shrink:0;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:99px;color:var(--muted);font-size:13px;cursor:pointer;">🗑</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- QUIZ SECTION (separate card) -->
-    <div class="card" id="quizCard">
-      <div class="card-title"><div class="icon icon-accent">📝</div>练习题 & 复习材料</div>
-      <div class="card-sub">生成互动选择题，选完即时反馈解析</div>
-      <div class="quiz-toolbar">
-        <button class="opt-btn" onclick="genInteractiveQuiz()">🎯 生成选择题（5题）</button>
-        <button class="opt-btn" onclick="genExam('sa')">✍️ 简答题（3题）</button>
-        <button class="opt-btn" onclick="genExam('vocab')">📖 生成词汇表</button>
-        <button class="opt-btn" onclick="genEssayHelper()">✒️ Essay 辅助</button>
-      </div>
-      <div id="quizContainer" style="display:none">
-        <div id="quizList" class="quiz-area"></div>
-        <div id="quizResult" style="display:none;margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:8px;font-size:14px;text-align:center"></div>
-      </div>
-      <div id="quizOutput" style="display:none;margin-top:12px;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
-    </div>
+        <!-- AI Chat sub-tab -->
+        <div id="rpanel-chat">
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg ai"><div class="msg-label">StudyMate AI</div>你好！上传课件后可以问我任何关于这节课的问题 👋</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;">
+            <button class="opt-btn" onclick="quickAsk('请根据课件和录音给我一个详细的课程总结')">📋 课程总结</button>
+            <button class="opt-btn" onclick="quickAsk('请生成8-12张Flashcard，格式：正面：英文术语，背面：中文解释加例子')">🗂 Flashcard</button>
+            <button class="opt-btn" onclick="quickAsk('请生成这节课的知识框架')">🗺 知识框架</button>
+          </div>
+          <div class="chat-input-row">
+            <textarea id="chatInput" placeholder="问我关于这节课的任何问题..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" rows="1" style="flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:99px;background:var(--paper);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);resize:none;line-height:1.4;overflow:hidden;"></textarea>
+            <button class="btn btn-primary" onclick="sendChat()">发送</button>
+            <button class="btn" onclick="clearChat()" title="清空" style="flex-shrink:0;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:99px;color:var(--muted);font-size:13px;cursor:pointer;">🗑</button>
+          </div>
+        </div>
 
-    <!-- JOINT REVIEW (shows only when both PDF + transcript exist) -->
-    <div class="card" id="jointCard" style="display:none">
-      <div class="card-title"><div class="icon" style="background:#e8f4f1;color:#4a7c6f">🔗</div>智能联合复习</div>
-      <div class="card-sub">结合课件 PDF 与课堂录音，AI 帮你提取考点、老师补充和自学部分</div>
-      <button class="btn btn-primary" id="jointBtn" onclick="runJointReview()" style="margin-bottom:12px">开始联合分析</button>
-      <div id="jointResult" style="display:none;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+        <!-- Quiz sub-tab -->
+        <div id="rpanel-quiz" style="display:none">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+            <button class="opt-btn" onclick="genInteractiveQuiz()">🎯 选择题（5题）</button>
+            <button class="opt-btn" onclick="genExam('sa')">✍️ 简答题（3题）</button>
+            <button class="opt-btn" onclick="genExam('vocab')">📖 词汇表</button>
+            <button class="opt-btn" onclick="genEssayHelper()">✒️ Essay 辅助</button>
+          </div>
+          <div id="quizContainer" style="display:none">
+            <div id="quizList" class="quiz-area"></div>
+            <div id="quizResult" style="display:none;margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:8px;font-size:14px;text-align:center"></div>
+          </div>
+          <div id="quizOutput" style="display:none;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+        </div>
+
+        <!-- Joint analysis sub-tab -->
+        <div id="rpanel-joint" style="display:none">
+          <div id="jointNoContent" style="text-align:center;padding:24px;color:var(--muted);font-size:14px;">
+            📎 需要同时有<strong>课件内容</strong>和<strong>录音转写</strong>才能使用联合分析<br>
+            <span style="font-size:12px;margin-top:8px;display:block">上传课件 + 保存录音转写后，此功能自动激活</span>
+          </div>
+          <div id="jointHasContent" style="display:none">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:12px">AI 结合课件和录音，提取核心重点、老师补充、预测考点</p>
+            <button class="btn btn-primary" id="jointBtn" onclick="runJointReview()" style="margin-bottom:12px">开始联合分析</button>
+            <div id="jointResult" style="display:none;padding:14px;background:var(--cream);border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
 <button class="float-notes-btn" onclick="toggleFloatNotes()" title="课堂笔记">📝</button>
@@ -864,6 +874,7 @@ async function genExam(type) {
   const qc = document.getElementById('quizContainer');
   if (qc) qc.style.display = 'none';
   if (out) { out.style.display = 'block'; out.textContent = '⏳ 生成中...'; }
+  switchReviewTab('quiz');
   try {
     const result = await callClaude([{role:'user',content:prompts[type]}], '你是留学生学习助手，用中英双语生成学习材料。');
     if (out) out.textContent = result;
@@ -993,23 +1004,42 @@ async function genEssayHelper() {
   const topic = prompt('请输入作业题目或论文主题：');
   if (!topic || !topic.trim()) return;
   const ctx = getContent();
-  const p = '作业题目：' + topic + '\n\n' + (ctx ? '相关课程内容：\n' + ctx.slice(0,3000) : '') + '\n\n请提供：1) 论文大纲 2) 3个核心论点 3) 可引用的课程内容 4) 建议参考方向。用中英双语，帮助思路整理，不要直接代写。';
-  showToast('Essay 辅助生成中...');
+  const p = '作业题目：' + topic + '\n\n' + (ctx ? '相关课程内容：\n' + ctx.slice(0,3000) : '') + '\n\n请提供：1) 论文大纲（Introduction/Body/Conclusion结构）2) 3个核心论点建议 3) 可引用的课程内容 4) 建议参考方向。用中英双语，帮助思路整理，不要直接代写。';
+  const out = document.getElementById('quizOutput');
+  const qc = document.getElementById('quizContainer');
+  if (qc) qc.style.display = 'none';
+  if (out) { out.style.display = 'block'; out.textContent = '⏳ Essay 辅助生成中...'; }
+  switchReviewTab('quiz');
   try {
-    const result = await callClaude([{role:'user',content:p}], '你是留学生学习助手，帮助整理论文思路。');
-    addMsg('ai', result);
-    setTimeout(()=>{ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
-  } catch(e) { showToast('生成失败'); }
+    const result = await callClaude([{role:'user',content:p}], '你是留学生学习助手，帮助整理论文思路，提供框架建议而非直接代写。');
+    if (out) out.textContent = result;
+  } catch(e) {
+    if (out) out.textContent = '';
+    showToast('生成失败，请稍后重试');
+  }
 }
 
 
+
+function switchReviewTab(tab) {
+  ['chat','quiz','joint'].forEach(t => {
+    document.getElementById('rpanel-'+t).style.display = t===tab ? 'block' : 'none';
+    const btn = document.getElementById('rtab-'+t);
+    if (btn) {
+      btn.style.borderBottom = t===tab ? '2px solid var(--accent)' : '2px solid transparent';
+      btn.style.color = t===tab ? 'var(--ink)' : 'var(--muted)';
+    }
+  });
+}
+
 function updateJointVisibility() {
   const course = getCourse(currentCourseId);
-  const card = document.getElementById('jointCard');
-  if (!card) return;
   const hasPDF = course && course.courseText && course.courseText.trim().length > 100;
   const hasTranscript = course && course.transcript && course.transcript.trim().length > 100;
-  card.style.display = (hasPDF && hasTranscript) ? 'block' : 'none';
+  const noContent = document.getElementById('jointNoContent');
+  const hasContent = document.getElementById('jointHasContent');
+  if (noContent) noContent.style.display = (hasPDF && hasTranscript) ? 'none' : 'block';
+  if (hasContent) hasContent.style.display = (hasPDF && hasTranscript) ? 'block' : 'none';
 }
 
 async function runJointReview() {
