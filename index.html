@@ -572,8 +572,7 @@ let audioChunks = [];
 let _pendingDeleteId = null;
 let _pendingDeleteType = null;
 
-window.onload = () => {
-  document.addEventListener('invalid', e => e.preventDefault(), true);
+function initApp() {
   // Subject mode init
   const savedSubject = localStorage.getItem('sm_subject') || 'arts';
   document.body.classList.add(savedSubject + '-mode');
@@ -600,9 +599,35 @@ window.onload = () => {
     showEmptyState();
   }
   const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
-  zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
+  if (zone) {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
+  }
+}
+
+window.onload = () => {
+  document.addEventListener('invalid', e => e.preventDefault(), true);
+  // Auth check happens in initGoogleAuth (called when Google script loads)
+  // If Google script is slow, show login screen immediately if no saved session
+  const saved = localStorage.getItem('sm_user');
+  if (!saved) {
+    // Show login screen immediately while Google loads
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    if (loginScreen) loginScreen.style.display = 'flex';
+    if (mainApp) mainApp.style.display = 'none';
+  } else {
+    // Has saved session - show app immediately, Google will validate later
+    try {
+      const user = JSON.parse(saved);
+      showApp(user);
+    } catch(e) {
+      localStorage.removeItem('sm_user');
+      const loginScreen = document.getElementById('loginScreen');
+      if (loginScreen) loginScreen.style.display = 'flex';
+    }
+  }
 };
 
 function getCourse(id) { return courses.find(c => c.id === id); }
@@ -1399,6 +1424,11 @@ function onGoogleSignIn(response) {
 function showApp(user) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
+  // Initialize app content after showing mainApp
+  if (!window._appInitialized) {
+    window._appInitialized = true;
+    initApp();
+  }
   // Update header avatar
   const signInBtn = document.getElementById('signInBtn');
   const userAvatar = document.getElementById('userAvatar');
