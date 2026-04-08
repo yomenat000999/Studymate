@@ -781,6 +781,52 @@ function renderFlashcards(text) {
   document.getElementById('flashcardGrid').innerHTML = cards.map(c=>`<div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="front">${c.front}</div><div class="back">${c.back||''}</div><div class="fc-hint">点击翻转</div></div>`).join('');
   document.getElementById('flashcardArea').style.display='block';
 }
+
+function clearChat() {
+  const course = getCourse(currentCourseId);
+  const name = course ? course.name : '本课程';
+  document.getElementById('chatMessages').innerHTML = '<div class="msg ai"><div class="msg-label">StudyMate AI</div>已加载课程「' + name + '」，有什么问题都可以问我 👋</div>';
+  showToast('对话已清空');
+}
+
+function getContent() {
+  const course = getCourse(currentCourseId);
+  if (!course) return '';
+  const parts = [];
+  if (course.courseText) parts.push('【课件内容】\n' + course.courseText.slice(0, 3000));
+  if (course.transcript) parts.push('【录音转写】\n' + course.transcript.slice(0, 2000));
+  return parts.join('\n\n');
+}
+
+async function genExam(type) {
+  const ctx = getContent();
+  if (!ctx) { showToast('请先上传课件或录音内容'); return; }
+  const prompts = {
+    mc: '根据以下课程内容，生成5道选择题。每题含题目、4个选项(A/B/C/D)和答案解析。用中英双语，专业术语保留英文。\n\n' + ctx,
+    sa: '根据以下课程内容，生成3道简答题，每题含参考答案。用中英双语。\n\n' + ctx,
+    vocab: '从以下课程内容提取10-15个重要专业词汇，以表格形式输出（英文词汇 | 中文解释 | 例句）。\n\n' + ctx
+  };
+  showToast('AI 生成中...');
+  try {
+    const result = await callClaude([{role:'user',content:prompts[type]}], '你是留学生学习助手，用中英双语生成学习材料。');
+    addMsg('ai', result);
+    setTimeout(()=>{ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
+  } catch(e) { showToast('生成失败'); }
+}
+
+async function genEssayHelper() {
+  const topic = prompt('请输入作业题目或论文主题：');
+  if (!topic || !topic.trim()) return;
+  const ctx = getContent();
+  const p = '作业题目：' + topic + '\n\n' + (ctx ? '相关课程内容：\n' + ctx.slice(0,3000) : '') + '\n\n请提供：1) 论文大纲 2) 3个核心论点 3) 可引用的课程内容 4) 建议参考方向。用中英双语，帮助思路整理，不要直接代写。';
+  showToast('Essay 辅助生成中...');
+  try {
+    const result = await callClaude([{role:'user',content:p}], '你是留学生学习助手，帮助整理论文思路。');
+    addMsg('ai', result);
+    setTimeout(()=>{ document.getElementById('chatMessages').scrollTop = 999999; }, 100);
+  } catch(e) { showToast('生成失败'); }
+}
+
 function quickAsk(prompt) {
   const input = document.getElementById('chatInput');
   input.value = prompt;
