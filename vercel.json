@@ -7,6 +7,9 @@
   },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/landing.html", "dest": "/landing.html" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/service-worker.js", "dest": "/service-worker.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
