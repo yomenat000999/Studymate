@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyMate · 留学生AI学习助手</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -423,9 +422,7 @@ let recInterval = null;
 let recSeconds = 0;
 let audioChunks = [];
 
-window.onload = () => {
-  document.addEventListener('invalid', e => e.preventDefault(), true);
-  document.addEventListener('invalid', e => e.preventDefault(), true);
+function initAppContent() {
   renderCourseList();
   if (currentCourseId && getCourse(currentCourseId)) {
     loadCourse(currentCourseId);
@@ -435,9 +432,16 @@ window.onload = () => {
     showEmptyState();
   }
   const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
-  zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
+  if (zone) {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+    zone.addEventListener('drop', e => { e.preventDefault(); zone.style.borderColor=''; if(e.dataTransfer.files.length) handleFiles({files:e.dataTransfer.files}); });
+  }
+}
+
+window.onload = () => {
+  document.addEventListener('invalid', e => e.preventDefault(), true);
+  // App content init happens inside showMainApp() after auth
 };
 
 function getCourse(id) { return courses.find(c => c.id === id); }
@@ -953,6 +957,7 @@ window.addEventListener('load', function() {
   function showMainApp(user) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
+    if (!window._appReady) { window._appReady = true; initAppContent(); }
     var av = document.getElementById('userAvatar');
     var sb = document.getElementById('signInBtn');
     if (av) { av.src = user.picture; av.alt = user.name; av.style.display = 'block'; }
