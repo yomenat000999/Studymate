@@ -271,7 +271,43 @@ body.science-mode .science-only { display:block; }
 </div>
 <div id="sm-signout-menu">
   <div class="sm-signout-info" id="sm-user-email"></div>
+  <div class="sm-signout-info" id="sm-plan-info" style="color:#4a7c6f;font-weight:600;"></div>
   <button class="sm-signout-btn" onclick="smSignOut()">退出登录</button>
+</div>
+
+<!-- UPGRADE PANEL -->
+<div id="upgrade-panel" style="display:none;position:fixed;top:60px;right:20px;z-index:2000;background:#fff;border:1px solid #d4cfc4;border-radius:16px;box-shadow:0 8px 32px rgba(26,26,46,.18);padding:24px;width:320px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;color:#1a1a2e;">升级套餐</div>
+    <button onclick="toggleUpgradePanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#7a7568;">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button id="up-monthly-btn" onclick="setUpgradeBilling('monthly')" style="flex:1;padding:7px;border:2px solid #1a1a2e;border-radius:99px;background:#1a1a2e;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">月付</button>
+    <button id="up-annual-btn" onclick="setUpgradeBilling('annual')" style="flex:1;padding:7px;border:2px solid #d4cfc4;border-radius:99px;background:#fff;color:#7a7568;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">年付 <span style="color:#2e7d32;font-size:10px;">省33%</span></button>
+  </div>
+  <!-- Pro -->
+  <div style="border:1px solid #d4cfc4;border-radius:12px;padding:16px;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div>
+        <div style="font-weight:600;font-size:15px;color:#1a1a2e;">Pro</div>
+        <div id="up-pro-price" style="font-size:13px;color:#7a7568;">£14.99/月</div>
+      </div>
+      <button onclick="doCheckout('pro')" id="up-pro-btn" style="padding:8px 16px;background:#c8553d;color:#fff;border:none;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">选择</button>
+    </div>
+    <div style="font-size:12px;color:#7a7568;line-height:1.6;">录音 30小时 · 问答200次/月 · 全部功能</div>
+  </div>
+  <!-- Max -->
+  <div style="border:2px solid #4a7c6f;border-radius:12px;padding:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div>
+        <div style="font-weight:600;font-size:15px;color:#1a1a2e;">Max <span style="font-size:10px;background:#e3f0ed;color:#4a7c6f;padding:2px 6px;border-radius:99px;">推荐</span></div>
+        <div id="up-max-price" style="font-size:13px;color:#7a7568;">£22.99/月</div>
+      </div>
+      <button onclick="doCheckout('max')" id="up-max-btn" style="padding:8px 16px;background:#4a7c6f;color:#fff;border:none;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">选择</button>
+    </div>
+    <div style="font-size:12px;color:#7a7568;line-height:1.6;">录音 60小时 · 问答无限 · 导出 · 优先支持</div>
+  </div>
+  <div style="font-size:11px;color:#b0ab9f;text-align:center;margin-top:12px;">随时取消 · 无违约金 · 支持信用卡</div>
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -320,6 +356,7 @@ body.science-mode .science-only { display:block; }
       <button class="mode-btn" id="artsBtn" onclick="setMode('arts')">📚 文科</button>
       <button class="mode-btn" id="sciBtn" onclick="setMode('science')">🔬 理科</button>
     </div>
+    <button id="upgrade-btn" onclick="toggleUpgradePanel()" style="display:none;padding:6px 14px;background:linear-gradient(135deg,var(--accent),#e8734a);color:#fff;border:none;border-radius:99px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;">⚡ 升级</button>
     <div class="ai-status"><div class="ai-dot"></div><span>AI 已就绪</span></div>
 </header>
 
@@ -1579,6 +1616,8 @@ window.addEventListener('load', function() {
     document.getElementById('sm-user-pic').src = meta.avatar_url || meta.picture || '';
     document.getElementById('sm-user-name').textContent = meta.full_name || meta.name || user.email || '';
     document.getElementById('sm-user-email').textContent = user.email || '';
+    // Show upgrade button for free users, load plan info
+    loadUserPlan();
     setTimeout(function() {
       if (typeof checkShareLink === 'function') checkShareLink();
       if (typeof initMode === 'function') initMode();
@@ -1604,6 +1643,74 @@ window.addEventListener('load', function() {
       }
     }, 300);
   }
+
+  var _upgradeBilling = 'monthly';
+
+  window.setUpgradeBilling = function(billing) {
+    _upgradeBilling = billing;
+    if (billing === 'annual') {
+      document.getElementById('up-annual-btn').style.background = '#1a1a2e';
+      document.getElementById('up-annual-btn').style.color = '#fff';
+      document.getElementById('up-annual-btn').style.borderColor = '#1a1a2e';
+      document.getElementById('up-monthly-btn').style.background = '#fff';
+      document.getElementById('up-monthly-btn').style.color = '#7a7568';
+      document.getElementById('up-monthly-btn').style.borderColor = '#d4cfc4';
+      document.getElementById('up-pro-price').textContent = '£139.99/年（£11.67/月）';
+      document.getElementById('up-max-price').textContent = '£249.99/年（£20.83/月）';
+    } else {
+      document.getElementById('up-monthly-btn').style.background = '#1a1a2e';
+      document.getElementById('up-monthly-btn').style.color = '#fff';
+      document.getElementById('up-monthly-btn').style.borderColor = '#1a1a2e';
+      document.getElementById('up-annual-btn').style.background = '#fff';
+      document.getElementById('up-annual-btn').style.color = '#7a7568';
+      document.getElementById('up-annual-btn').style.borderColor = '#d4cfc4';
+      document.getElementById('up-pro-price').textContent = '£14.99/月';
+      document.getElementById('up-max-price').textContent = '£22.99/月';
+    }
+  };
+
+  window.toggleUpgradePanel = function() {
+    var panel = document.getElementById('upgrade-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('sm-signout-menu').style.display = 'none';
+  };
+
+  window.doCheckout = async function(plan) {
+    var btn = document.getElementById('up-' + plan + '-btn');
+    btn.textContent = '跳转中...';
+    btn.disabled = true;
+    try {
+      var s = await _supabase.auth.getSession();
+      if (!s.data.session) { alert('请先登录'); return; }
+      var authH = { 'Authorization': 'Bearer ' + s.data.session.access_token };
+      var res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authH },
+        body: JSON.stringify({ plan: plan, billing: _upgradeBilling })
+      });
+      var data = await res.json();
+      if (data.url) { window.location.href = data.url; }
+      else { alert('出错了：' + (data.error || '请重试')); btn.textContent = '选择'; btn.disabled = false; }
+    } catch(e) { alert('网络错误，请重试'); btn.textContent = '选择'; btn.disabled = false; }
+  };
+
+  window.loadUserPlan = async function() {
+    try {
+      var s = await _supabase.auth.getSession();
+      if (!s.data.session) return;
+      var { data: usage } = await _supabase
+        .from('user_usage')
+        .select('plan')
+        .eq('user_id', s.data.session.user.id)
+        .single();
+      var plan = usage ? usage.plan : 'free';
+      var planLabels = { free: 'Free 免费版', pro: 'Pro ⚡', max: 'Max 🚀' };
+      document.getElementById('sm-plan-info').textContent = '当前套餐：' + (planLabels[plan] || plan);
+      // Show upgrade button only for free users
+      var upgradeBtn = document.getElementById('upgrade-btn');
+      if (upgradeBtn) upgradeBtn.style.display = plan === 'free' ? 'block' : 'none';
+    } catch(e) {}
+  };
 
   window.smSignOut = async function() {
     await _supabase.auth.signOut();
