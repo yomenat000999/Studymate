@@ -1084,7 +1084,7 @@ async function callClaude(messages, systemPrompt, onChunk) {
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败，请稍后重试'); }
     const text = await res.text();
     const data = JSON.parse(text);
     if (!data.content) throw new Error(data.error || '网络出错');
@@ -1704,8 +1704,18 @@ async function sendChat() {
   const content=document.getElementById('courseContentText').value.trim();
   const transcript=transcriptText||document.getElementById('manualTranscript').value.trim();
   const ctx = [content&&`【课件】\n${content.substring(0,800)}`, transcript&&`【录音】\n${transcript.substring(0,1000)}`].filter(Boolean).join('\n\n');
-  try { const result=await callClaude([{role:'user',content:q}], ctx+'\n\n用中英双语回答，专业术语保留英文并解释。'); addMsg('ai',result); }
-  catch(e) { addMsg('ai','抱歉，出错了：'+e.message); }
+  try {
+    const result=await callClaude([{role:'user',content:q}], ctx+'\n\n用中英双语回答，专业术语保留英文并解释。');
+    addMsg('ai',result);
+  } catch(e) {
+    if (e.message && e.message.includes('额度')) {
+      addMsg('ai', '⚠️ ' + e.message + ' 点右上角「⚡ 升级」升级套餐。');
+      var panel = document.getElementById('upgrade-panel');
+      if (panel) panel.style.display = 'block';
+    } else {
+      addMsg('ai','抱歉，出错了：'+e.message);
+    }
+  }
 }
 
 function addMsg(role,text) {

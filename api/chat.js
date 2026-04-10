@@ -26,6 +26,52 @@ export default async function handler(req, res) {
   const user = await getUser(req.headers.authorization);
   if (!user) return res.status(401).json({ error: '请先登录' });
 
+  // Check chat usage limits
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  let { data: usage } = await supabase
+    .from('user_usage')
+    .select('plan, chat_monthly_used, chat_monthly_limit, billing_period_start')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!usage) {
+    // Create usage record if missing
+    const { data: newUsage } = await supabase
+      .from('user_usage')
+      .insert({ user_id: user.id, plan: 'free', transcribe_seconds_limit: 3600, chat_monthly_limit: 150, chat_monthly_used: 0 })
+      .select().single();
+    usage = newUsage;
+  }
+
+  // Reset monthly usage if new billing period
+  const periodStart = new Date(usage.billing_period_start);
+  if (now.getMonth() !== periodStart.getMonth() || now.getFullYear() !== periodStart.getFullYear()) {
+    await supabase.from('user_usage').update({
+      chat_monthly_used: 0,
+      billing_period_start: now.toISOString(),
+    }).eq('user_id', user.id);
+    usage.chat_monthly_used = 0;
+  }
+
+  // Plan limits
+  const CHAT_LIMITS = { free: 90, pro: 200, max: 400 }; // free=3/day*30days
+  const chatLimit = CHAT_LIMITS[usage.plan] || 90;
+
+  if ((usage.chat_monthly_used || 0) >= chatLimit) {
+    return res.status(403).json({
+      error: `本月 AI 问答额度已用完（${chatLimit}次）。升级套餐可获得更多额度。`,
+      limitReached: true,
+      plan: usage.plan,
+    });
+  }
+
+  // Increment usage
+  await supabase.from('user_usage')
+    .update({ chat_monthly_used: (usage.chat_monthly_used || 0) + 1, updated_at: now.toISOString() })
+    .eq('user_id', user.id);
+
   const { messages, system, max_tokens, stream } = req.body;
   if (!messages) return res.status(400).json({ error: 'Missing messages' });
 
