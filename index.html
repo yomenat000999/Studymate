@@ -203,6 +203,13 @@ body.science-mode .science-only { display:block; }
 
 <!-- SUPABASE AUTH -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- PDF.js for client-side PDF parsing -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  }
+</script>
 <style>
 #sm-login-overlay{position:fixed;inset:0;background:#f5f0e8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
 .sm-login-card{background:#faf7f2;border:1px solid #d4cfc4;border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
@@ -964,14 +971,41 @@ async function readAllFiles() {
     r.readAsText(file);
   })));
 
-  // Process PDF files sequentially
+  // Process PDF files sequentially — client-side first, server fallback
   for (const file of pdfFiles) {
-    if (file.size > 5 * 1024 * 1024) {
-      showToast(`${file.name} 超过5MB，请手动复制文字粘贴`);
-      continue;
-    }
     showToast(`⏳ 正在解析 ${file.name}...`);
     try {
+      // Try client-side PDF.js first (fast, free)
+      let text = '';
+      if (typeof pdfjsLib !== 'undefined') {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const pages = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            pages.push(content.items.map(item => item.str).join(' '));
+          }
+          text = pages.join('\n\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]{2,}/g, ' ').trim();
+        } catch(pdfErr) {
+          console.warn('PDF.js failed, falling back to server:', pdfErr);
+        }
+      }
+
+      // If client-side got meaningful text, use it
+      if (text && text.length > 100) {
+        combined += `\n\n【${file.name}】\n` + text;
+        showToast(`✓ ${file.name} 解析成功`);
+        continue;
+      }
+
+      // Fallback: server-side (for scanned PDFs), limit to 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(`${file.name} 是扫描件且超过5MB，请手动粘贴文字`);
+        continue;
+      }
+      showToast(`⏳ ${file.name} 是扫描件，AI 解析中...`);
       const base64 = await new Promise((resolve, reject) => {
         const r = new FileReader();
         r.onload = e => resolve(e.target.result.split(',')[1]);
