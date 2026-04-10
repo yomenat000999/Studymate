@@ -67,9 +67,6 @@ export default async function handler(req, res) {
               logo: true,
               button_color: '#c8553d',
             },
-            preview: {
-              locale: 'en',
-            },
             product_options: {
               redirect_url: `${process.env.APP_URL || 'https://studymate-smoky-eta.vercel.app'}/?checkout=success&plan=${plan}`,
               receipt_link_url: `${process.env.APP_URL || 'https://studymate-smoky-eta.vercel.app'}/`,
