@@ -942,19 +942,34 @@ function removeFile(i) { uploadedFiles.splice(i, 1); renderFileList(); readAllFi
 
 async function readAllFiles() {
   document.getElementById('genBtn').disabled = true;
-document.getElementById('parsingHint').style.display = 'inline';
+  document.getElementById('parsingHint').style.display = 'inline';
   const textFiles = uploadedFiles.filter(f => f.name.endsWith('.txt'));
   const pdfFiles = uploadedFiles.filter(f => f.name.endsWith('.pdf'));
   const otherFiles = uploadedFiles.filter(f => !f.name.endsWith('.txt') && !f.name.endsWith('.pdf'));
   const otherLabels = otherFiles.map(f => `[已上传：${f.name}，请粘贴文字内容]`).join('\n');
-  if (!uploadedFiles.length) { document.getElementById('courseContentText').value = ''; saveCourseData(); return; }
+  if (!uploadedFiles.length) {
+    document.getElementById('courseContentText').value = '';
+    saveCourseData();
+    document.getElementById('genBtn').disabled = false;
+    document.getElementById('parsingHint').style.display = 'none';
+    return;
+  }
   let combined = otherLabels ? otherLabels + '\n\n' : '';
-  let pending = textFiles.length + pdfFiles.length;
-  if (pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已添加 ${uploadedFiles.length} 个文件 ✓`); return; }
-  const tryFinish = () => { if (--pending === 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`已读取 ${uploadedFiles.length} 个文件 ✓`); } };
-  textFiles.forEach(file => { const r = new FileReader(); r.onload = e => { combined += `\n\n【${file.name}】\n` + e.target.result; tryFinish(); }; r.readAsText(file); });
-for (const file of pdfFiles) {
-if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} 超过5MB，请手动复制文字粘贴`); pending--; if(pending<=0){document.getElementById('courseContentText').value=combined.trim();saveCourseData();document.getElementById('genBtn').disabled=false;document.getElementById('parsingHint').style.display='none';} continue; }
+
+  // Process text files
+  await Promise.all(textFiles.map(file => new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = e => { combined += `\n\n【${file.name}】\n` + e.target.result; resolve(); };
+    r.onerror = resolve;
+    r.readAsText(file);
+  })));
+
+  // Process PDF files sequentially
+  for (const file of pdfFiles) {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(`${file.name} 超过5MB，请手动复制文字粘贴`);
+      continue;
+    }
     showToast(`⏳ 正在解析 ${file.name}...`);
     try {
       const base64 = await new Promise((resolve, reject) => {
@@ -964,15 +979,30 @@ if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} 超过5MB，请手动
         r.readAsDataURL(file);
       });
       const authH = await window.smGetAuthHeader();
-      const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json', ...authH}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
+      const res = await fetch('/api/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authH },
+        body: JSON.stringify({ fileBase64: base64, mimeType: 'application/pdf' })
+      });
       const data = await res.json();
-      if (data.text) { combined += `\n\n【${file.name}】\n` + data.text; showToast(`✓ ${file.name} 解析成功`); }
-      else { showToast(`${file.name} 解析失败，请手动粘贴`); }
-    } catch(e) { showToast(`${file.name} 解析出错，请手动粘贴`); }
-    pending--;
+      if (data.text) {
+        combined += `\n\n【${file.name}】\n` + data.text;
+        showToast(`✓ ${file.name} 解析成功`);
+      } else {
+        showToast(`${file.name} 解析失败，请手动粘贴`);
+      }
+    } catch(e) {
+      showToast(`${file.name} 解析出错，请手动粘贴`);
+    }
   }
-  if (pending <= 0) { document.getElementById('courseContentText').value = combined.trim(); saveCourseData(); showToast(`文件读取完成 ✓`);document.getElementById('genBtn').disabled = false;
-document.getElementById('parsingHint').style.display = 'none'; }
+
+  // All done — update textarea
+  const finalText = combined.trim();
+  document.getElementById('courseContentText').value = finalText;
+  saveCourseData();
+  document.getElementById('genBtn').disabled = false;
+  document.getElementById('parsingHint').style.display = 'none';
+  if (finalText) showToast(`文件读取完成 ✓`);
 }
 
 function toggleOpt(btn) { btn.classList.toggle('selected'); }
