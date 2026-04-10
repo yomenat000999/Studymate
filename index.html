@@ -1682,7 +1682,10 @@ window.addEventListener('load', function() {
     document.getElementById('sm-user-email').textContent = user.email || '';
     // Show upgrade button immediately, then load plan info
     var upgradeBtn = document.getElementById('upgrade-btn');
-    if (upgradeBtn) upgradeBtn.style.display = 'block';
+    if (upgradeBtn) {
+      upgradeBtn.style.setProperty('display', 'block', 'important');
+      upgradeBtn.removeAttribute('hidden');
+    }
     loadUserPlan();
     setTimeout(function() {
       if (typeof checkShareLink === 'function') checkShareLink();
