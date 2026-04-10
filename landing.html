@@ -297,7 +297,7 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
       <!-- FREE -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;text-align:left;">
         <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Free</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--ink);margin-bottom:4px;">$0</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--ink);margin-bottom:4px;">£0</div>
         <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">永久免费，无需信用卡</div>
         <a href="/" style="display:block;text-align:center;padding:12px;border:1px solid var(--border);border-radius:99px;font-size:14px;font-weight:500;color:var(--ink);text-decoration:none;margin-bottom:28px;transition:all .15s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background=''">免费开始</a>
         <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px;">包含：</div>
@@ -319,9 +319,9 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
         <div style="position:absolute;top:16px;right:16px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;">最受欢迎</div>
         <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Pro</div>
         <div style="font-family:'DM Serif Display',serif;font-size:42px;color:#fff;margin-bottom:4px;">
-          <span id="pro-price">$12.99</span><span style="font-size:16px;font-weight:400;opacity:.7">/月</span>
+          <span id="pro-price">£14.99</span><span style="font-size:16px;font-weight:400;opacity:.7">/月</span>
         </div>
-        <div id="pro-annual-note" style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;display:none;">按年付 $99，相当于 $8.25/月</div>
+        <div id="pro-annual-note" style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;display:none;">按年付 £139.99，相当于 £11.67/月</div>
         <div id="pro-monthly-note" style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;">按月付款，随时取消</div>
         <a href="#" onclick="startCheckout('pro')" style="display:block;text-align:center;padding:12px;background:var(--accent);border-radius:99px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;margin-bottom:28px;">立即升级 Pro</a>
         <div style="font-size:13px;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:12px;">Free 全部功能，加上：</div>
@@ -343,9 +343,9 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
       <div style="background:var(--card);border:2px solid var(--accent2);border-radius:16px;padding:32px 28px;text-align:left;">
         <div style="font-size:13px;font-weight:600;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Max</div>
         <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--ink);margin-bottom:4px;">
-          <span id="max-price">$19.90</span><span style="font-size:16px;font-weight:400;color:var(--muted)">/月</span>
+          <span id="max-price">£22.99</span><span style="font-size:16px;font-weight:400;color:var(--muted)">/月</span>
         </div>
-        <div id="max-annual-note" style="font-size:13px;color:var(--muted);margin-bottom:24px;display:none;">按年付 $159，相当于 $13.25/月</div>
+        <div id="max-annual-note" style="font-size:13px;color:var(--muted);margin-bottom:24px;display:none;">按年付 £249.99，相当于 £20.83/月</div>
         <div id="max-monthly-note" style="font-size:13px;color:var(--muted);margin-bottom:24px;">按月付款，随时取消</div>
         <a href="#" onclick="startCheckout('max')" style="display:block;text-align:center;padding:12px;background:var(--accent2);border-radius:99px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;margin-bottom:28px;">升级到 Max</a>
         <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px;">Pro 全部功能，加上：</div>
@@ -361,7 +361,7 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
 
     </div>
 
-    <p style="margin-top:32px;font-size:13px;color:var(--muted);">所有价格以美元计算 · 支持信用卡 / 借记卡 · 随时取消，无违约金</p>
+    <p style="margin-top:32px;font-size:13px;color:var(--muted);">所有价格以英镑计算 · 支持信用卡 / 借记卡 · 随时取消，无违约金</p>
   </div>
 </section>
 
@@ -378,8 +378,8 @@ function toggleBilling() {
     toggle.style.background = 'var(--accent2)';
     monthLabel.style.color = 'var(--muted)'; monthLabel.style.fontWeight = '400';
     annualLabel.style.color = 'var(--ink)'; annualLabel.style.fontWeight = '600';
-    document.getElementById('pro-price').textContent = '$8.25';
-    document.getElementById('max-price').textContent = '$13.25';
+    document.getElementById('pro-price').textContent = '£11.67';
+    document.getElementById('max-price').textContent = '£20.83';
     document.getElementById('pro-annual-note').style.display = 'block';
     document.getElementById('pro-monthly-note').style.display = 'none';
     document.getElementById('max-annual-note').style.display = 'block';
@@ -389,8 +389,8 @@ function toggleBilling() {
     toggle.style.background = 'var(--accent)';
     monthLabel.style.color = 'var(--ink)'; monthLabel.style.fontWeight = '600';
     annualLabel.style.color = 'var(--muted)'; annualLabel.style.fontWeight = '400';
-    document.getElementById('pro-price').textContent = '$12.99';
-    document.getElementById('max-price').textContent = '$19.90';
+    document.getElementById('pro-price').textContent = '£14.99';
+    document.getElementById('max-price').textContent = '£22.99';
     document.getElementById('pro-annual-note').style.display = 'none';
     document.getElementById('pro-monthly-note').style.display = 'block';
     document.getElementById('max-annual-note').style.display = 'none';
