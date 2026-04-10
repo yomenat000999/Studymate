@@ -94,7 +94,9 @@ export default async function handler(req, res) {
     const checkoutUrl = data.data?.attributes?.url;
     if (!checkoutUrl) return res.status(500).json({ error: '未获取到支付链接' });
 
-    return res.status(200).json({ url: checkoutUrl });
+    // Force English language
+    const urlWithLang = checkoutUrl + (checkoutUrl.includes('?') ? '&' : '?') + 'checkout[locale]=en';
+    return res.status(200).json({ url: urlWithLang });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
