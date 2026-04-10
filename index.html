@@ -1049,7 +1049,7 @@ async function callClaude(messages, systemPrompt, onChunk) {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json', ...authH},
-      body: JSON.stringify({messages, system: systemPrompt, max_tokens: 4000, stream: true})
+      body: JSON.stringify({messages, system: systemPrompt, max_tokens: 2500, stream: true})
     });
     if (!res.ok) throw new Error('请求失败');
     const reader = res.body.getReader();
@@ -1077,7 +1077,7 @@ async function callClaude(messages, systemPrompt, onChunk) {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', ...authH},
-    body: JSON.stringify({messages, system: systemPrompt, max_tokens: 4000})
+    body: JSON.stringify({messages, system: systemPrompt, max_tokens: 2500})
   });
   if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
   const text = await res.text();
@@ -1090,7 +1090,7 @@ async function callClaude(messages, systemPrompt, onChunk) {
 
 async function generateStudyMaterial() {
   if (!currentCourseId) { showToast('请先选择课程'); return; }
-  const content = document.getElementById('courseContentText').value.trim().substring(0, 2000);
+  const content = document.getElementById('courseContentText').value.trim().substring(0, 1500);
   if (!content) { showToast('请先上传课件或粘贴内容'); return; }
   const opts = getSelectedOpts();
   const lang = document.getElementById('outputLang').value;
@@ -1215,7 +1215,7 @@ function saveTranscript() {
 
 async function quickReview(type) {
   if (!currentCourseId) { showToast('请先选择课程'); return; }
-  const content = document.getElementById('courseContentText').value.trim().substring(0, 2000);
+  const content = document.getElementById('courseContentText').value.trim().substring(0, 1500);
   const transcript = transcriptText || document.getElementById('manualTranscript').value.trim();
   if (!content && !transcript) { showToast('请先上传课件或保存录音转录'); return; }
   const types = { summary:{label:'课程总结',prompt:'请生成这节课的详细总结'}, flashcards:{label:'Flashcard',prompt:'生成8-12张Flashcard，格式：【正面】英文术语\n【背面】中文解释+例子'}, questions:{label:'练习题',prompt:'生成5道练习题附答案'}, mindmap:{label:'知识框架',prompt:'生成文字版知识框架'} };
