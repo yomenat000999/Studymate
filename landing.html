@@ -64,7 +64,10 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
 
 <nav class="nav">
   <div class="logo">Study<span>Mate</span></div>
-  <a href="/" class="nav-cta">开始使用 →</a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="#pricing" style="font-size:14px;color:var(--muted);text-decoration:none;font-weight:500;">定价</a>
+    <a href="/" class="nav-cta">开始使用 →</a>
+  </div>
 </nav>
 
 <section class="hero">
@@ -272,6 +275,133 @@ footer{padding:32px 20px;text-align:center;font-size:13px;color:var(--muted);bor
     </div>
   </div>
 </section>
+
+<!-- PRICING SECTION -->
+<section id="pricing" style="padding:80px 24px;background:var(--paper);text-align:center;">
+  <div style="max-width:960px;margin:0 auto;">
+    <div style="font-size:13px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">定价</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:36px;margin-bottom:12px;color:var(--ink)">选择适合你的方案</h2>
+    <p style="color:var(--muted);font-size:16px;margin-bottom:48px">所有方案均包含核心 AI 功能，随时可以升级或降级</p>
+
+    <!-- Billing toggle -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:40px;">
+      <span id="toggle-monthly-label" style="font-size:14px;font-weight:600;color:var(--ink)">月付</span>
+      <div onclick="toggleBilling()" style="width:44px;height:24px;background:var(--accent);border-radius:99px;cursor:pointer;position:relative;transition:background .2s;" id="billing-toggle">
+        <div id="billing-dot" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .2s;"></div>
+      </div>
+      <span id="toggle-annual-label" style="font-size:14px;color:var(--muted)">年付 <span style="background:#e8f5e9;color:#2e7d32;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;">省最多36%</span></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;align-items:start;">
+
+      <!-- FREE -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;text-align:left;">
+        <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Free</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--ink);margin-bottom:4px;">$0</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px;">永久免费，无需信用卡</div>
+        <a href="/" style="display:block;text-align:center;padding:12px;border:1px solid var(--border);border-radius:99px;font-size:14px;font-weight:500;color:var(--ink);text-decoration:none;margin-bottom:28px;transition:all .15s;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background=''">免费开始</a>
+        <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px;">包含：</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--ink);">
+          <li>✅ 录音转写 <strong>1小时</strong>/月</li>
+          <li>✅ 中英双语翻译</li>
+          <li>✅ PDF 解析 <strong>3个</strong>/月</li>
+          <li>✅ AI 生成学习材料 <strong>3次</strong>/月</li>
+          <li>✅ AI 问答 <strong>每天5次</strong></li>
+          <li>✅ 练习题 <strong>每课5题</strong></li>
+          <li style="color:var(--muted)">❌ 词汇表 / 联合分析</li>
+          <li style="color:var(--muted)">❌ 文科/理科专属工具</li>
+          <li style="color:var(--muted)">❌ Essay 辅助</li>
+        </ul>
+      </div>
+
+      <!-- PRO -->
+      <div style="background:var(--ink);border:1px solid var(--ink);border-radius:16px;padding:32px 28px;text-align:left;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:16px;right:16px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;">最受欢迎</div>
+        <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Pro</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:42px;color:#fff;margin-bottom:4px;">
+          <span id="pro-price">$12.99</span><span style="font-size:16px;font-weight:400;opacity:.7">/月</span>
+        </div>
+        <div id="pro-annual-note" style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;display:none;">按年付 $99，相当于 $8.25/月</div>
+        <div id="pro-monthly-note" style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;">按月付款，随时取消</div>
+        <a href="#" onclick="startCheckout('pro')" style="display:block;text-align:center;padding:12px;background:var(--accent);border-radius:99px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;margin-bottom:28px;">立即升级 Pro</a>
+        <div style="font-size:13px;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:12px;">Free 全部功能，加上：</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#fff;">
+          <li>✅ 录音转写 <strong>30小时</strong>/月</li>
+          <li>✅ PDF 解析无限</li>
+          <li>✅ AI 生成材料无限</li>
+          <li>✅ AI 问答 <strong>每月300次</strong></li>
+          <li>✅ 练习题无限</li>
+          <li>✅ 词汇表生成</li>
+          <li>✅ PDF + 录音联合分析</li>
+          <li>✅ 文科 / 理科专属工具</li>
+          <li>✅ Essay 辅助</li>
+          <li>✅ 历史记录保存 6个月</li>
+        </ul>
+      </div>
+
+      <!-- MAX -->
+      <div style="background:var(--card);border:2px solid var(--accent2);border-radius:16px;padding:32px 28px;text-align:left;">
+        <div style="font-size:13px;font-weight:600;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Max</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:42px;color:var(--ink);margin-bottom:4px;">
+          <span id="max-price">$19.90</span><span style="font-size:16px;font-weight:400;color:var(--muted)">/月</span>
+        </div>
+        <div id="max-annual-note" style="font-size:13px;color:var(--muted);margin-bottom:24px;display:none;">按年付 $159，相当于 $13.25/月</div>
+        <div id="max-monthly-note" style="font-size:13px;color:var(--muted);margin-bottom:24px;">按月付款，随时取消</div>
+        <a href="#" onclick="startCheckout('max')" style="display:block;text-align:center;padding:12px;background:var(--accent2);border-radius:99px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;margin-bottom:28px;">升级到 Max</a>
+        <div style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px;">Pro 全部功能，加上：</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--ink);">
+          <li>✅ 录音转写 <strong>60小时</strong>/月</li>
+          <li>✅ AI 问答 <strong>无限次</strong></li>
+          <li>✅ 历史记录永久保存</li>
+          <li>✅ 导出 PDF / Word</li>
+          <li>✅ 优先 AI 处理速度</li>
+          <li>✅ 优先邮件客服支持</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <p style="margin-top:32px;font-size:13px;color:var(--muted);">所有价格以美元计算 · 支持信用卡 / 借记卡 · 随时取消，无违约金</p>
+  </div>
+</section>
+
+<script>
+var isAnnual = false;
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  var dot = document.getElementById('billing-dot');
+  var toggle = document.getElementById('billing-toggle');
+  var monthLabel = document.getElementById('toggle-monthly-label');
+  var annualLabel = document.getElementById('toggle-annual-label');
+  if (isAnnual) {
+    dot.style.left = '23px';
+    toggle.style.background = 'var(--accent2)';
+    monthLabel.style.color = 'var(--muted)'; monthLabel.style.fontWeight = '400';
+    annualLabel.style.color = 'var(--ink)'; annualLabel.style.fontWeight = '600';
+    document.getElementById('pro-price').textContent = '$8.25';
+    document.getElementById('max-price').textContent = '$13.25';
+    document.getElementById('pro-annual-note').style.display = 'block';
+    document.getElementById('pro-monthly-note').style.display = 'none';
+    document.getElementById('max-annual-note').style.display = 'block';
+    document.getElementById('max-monthly-note').style.display = 'none';
+  } else {
+    dot.style.left = '3px';
+    toggle.style.background = 'var(--accent)';
+    monthLabel.style.color = 'var(--ink)'; monthLabel.style.fontWeight = '600';
+    annualLabel.style.color = 'var(--muted)'; annualLabel.style.fontWeight = '400';
+    document.getElementById('pro-price').textContent = '$12.99';
+    document.getElementById('max-price').textContent = '$19.90';
+    document.getElementById('pro-annual-note').style.display = 'none';
+    document.getElementById('pro-monthly-note').style.display = 'block';
+    document.getElementById('max-annual-note').style.display = 'none';
+    document.getElementById('max-monthly-note').style.display = 'block';
+  }
+}
+function startCheckout(plan) {
+  // Stripe checkout — will be wired up after Stripe setup
+  window.location.href = '/checkout?plan=' + plan + (isAnnual ? '&billing=annual' : '&billing=monthly');
+}
+</script>
 
 <section class="share-strip">
   <h3 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:8px">觉得有用？分享给同学 🎓</h3>
