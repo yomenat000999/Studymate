@@ -420,8 +420,9 @@ async function startCheckout(plan, btnEl) {
       if (data.session) authH = { 'Authorization': 'Bearer ' + data.session.access_token };
     }
     if (!authH.Authorization) {
-      alert('请先登录后再订阅');
-      window.location.href = '/';
+      // Not logged in — redirect to app with checkout intent
+      var billing = isAnnual ? 'annual' : 'monthly';
+      window.location.href = '/?checkout_plan=' + plan + '&checkout_billing=' + billing;
       return;
     }
 

@@ -1582,6 +1582,26 @@ window.addEventListener('load', function() {
     setTimeout(function() {
       if (typeof checkShareLink === 'function') checkShareLink();
       if (typeof initMode === 'function') initMode();
+      // Handle checkout intent from landing page
+      var params = new URLSearchParams(window.location.search);
+      var checkoutPlan = params.get('checkout_plan');
+      var checkoutBilling = params.get('checkout_billing');
+      if (checkoutPlan) {
+        setTimeout(async function() {
+          try {
+            var s = await window._smSupabase.auth.getSession();
+            if (!s.data.session) return;
+            var authH = { 'Authorization': 'Bearer ' + s.data.session.access_token };
+            var res = await fetch('/api/checkout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authH },
+              body: JSON.stringify({ plan: checkoutPlan, billing: checkoutBilling || 'monthly' })
+            });
+            var data = await res.json();
+            if (data.url) window.location.href = data.url;
+          } catch(e) { console.error('Auto checkout failed', e); }
+        }, 500);
+      }
     }, 300);
   }
 
