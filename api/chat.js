@@ -1,11 +1,30 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+async function getUser(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return user;
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return res.status(200).end();
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Auth check
+  const user = await getUser(req.headers.authorization);
+  if (!user) return res.status(401).json({ error: '请先登录' });
 
   const { messages, system, max_tokens, stream } = req.body;
   if (!messages) return res.status(400).json({ error: 'Missing messages' });
@@ -40,7 +59,6 @@ export default async function handler(req, res) {
         return;
       }
 
-      // Forward SSE chunks
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       while (true) {
@@ -69,7 +87,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Non-streaming mode (unchanged)
+  // Non-streaming mode
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

@@ -201,8 +201,8 @@ body.arts-mode .arts-only { display:block; }
 body.science-mode .science-only { display:block; }
 </style>
 
-<!-- GOOGLE AUTH -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- SUPABASE AUTH -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 #sm-login-overlay{position:fixed;inset:0;background:#f5f0e8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
 .sm-login-card{background:#faf7f2;border:1px solid #d4cfc4;border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,.08)}
@@ -926,7 +926,8 @@ if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} 超过5MB，请手动
         r.onerror = reject;
         r.readAsDataURL(file);
       });
-      const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
+      const authH = await window.smGetAuthHeader();
+      const res = await fetch('/api/parse', { method:'POST', headers:{'Content-Type':'application/json', ...authH}, body: JSON.stringify({fileBase64:base64, mimeType:'application/pdf'}) });
       const data = await res.json();
       if (data.text) { combined += `\n\n【${file.name}】\n` + data.text; showToast(`✓ ${file.name} 解析成功`); }
       else { showToast(`${file.name} 解析失败，请手动粘贴`); }
@@ -941,11 +942,12 @@ function toggleOpt(btn) { btn.classList.toggle('selected'); }
 function getSelectedOpts() { return [...document.querySelectorAll('#panel-prep .opt-btn.selected')].map(b => b.textContent.trim()); }
 
 async function callClaude(messages, systemPrompt, onChunk) {
+  const authH = await window.smGetAuthHeader();
   // Streaming mode when onChunk callback provided
   if (onChunk) {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ...authH},
       body: JSON.stringify({messages, system: systemPrompt, max_tokens: 4000, stream: true})
     });
     if (!res.ok) throw new Error('请求失败');
@@ -973,7 +975,7 @@ async function callClaude(messages, systemPrompt, onChunk) {
   // Non-streaming fallback
   const res = await fetch('/api/chat', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', ...authH},
     body: JSON.stringify({messages, system: systemPrompt, max_tokens: 4000})
   });
   if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
@@ -1049,19 +1051,21 @@ function stopRecording() {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
+          const authH = await window.smGetAuthHeader();
           const res = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', ...authH},
             body: JSON.stringify({audioBase64: reader.result.split(',')[1], mimeType: 'audio/webm'})
           });
           const data = await res.json();
+          if (data.limitReached) { document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--accent)">⚠️ ' + data.error + '</span>'; return; }
           if (!data.transcriptId) throw new Error(data.error || '上传失败');
           document.getElementById('transcriptBox').innerHTML = '<span style="color:var(--muted)">⏳ 正在转写中... (约需30-60秒)<br><span style="font-size:12px">转写完成后将自动翻译为中文</span></span>';
           const poll = async () => {
             try {
               const pollRes = await fetch('/api/transcribe', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {'Content-Type': 'application/json', ...authH},
                 body: JSON.stringify({transcriptId: data.transcriptId})
               });
               const pollData = await pollRes.json();
@@ -1548,29 +1552,61 @@ window.addEventListener('load', function() {
 
 <script>
 (function(){
-  var CID = '211254310291-0v89pjlebqimuvjt861secafvadttivg.apps.googleusercontent.com';
-  var KEY = 'sm_auth_user';
+  var SUPABASE_URL = 'https://cgyvpkltfjjmdrpxeoin.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNneXZwa2x0ZmpqbWRycHhlb2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTIwMDIsImV4cCI6MjA5MTM4ODAwMn0._vCEAi5gTqRLkmj8hs0HiNRsWBzHKGd1JEQIcyCqY60';
+
+  var _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window._smSupabase = _supabase;
+  window._smSession = null;
+
+  // Get auth token for API calls
+  window.smGetAuthHeader = async function() {
+    var session = window._smSession;
+    if (!session) {
+      var { data } = await _supabase.auth.getSession();
+      session = data.session;
+      window._smSession = session;
+    }
+    if (!session) return {};
+    return { 'Authorization': 'Bearer ' + session.access_token };
+  };
 
   function smShowApp(user) {
     document.getElementById('sm-login-overlay').style.display = 'none';
     var chip = document.getElementById('sm-user-chip');
     chip.style.display = 'flex';
-    document.getElementById('sm-user-pic').src = user.picture || '';
-    document.getElementById('sm-user-name').textContent = user.name || '';
+    var meta = user.user_metadata || {};
+    document.getElementById('sm-user-pic').src = meta.avatar_url || meta.picture || '';
+    document.getElementById('sm-user-name').textContent = meta.full_name || meta.name || user.email || '';
     document.getElementById('sm-user-email').textContent = user.email || '';
-    // Check for share link after login
-    setTimeout(function() { if (typeof checkShareLink === 'function') checkShareLink(); if (typeof initMode === 'function') initMode(); }, 300);
+    setTimeout(function() {
+      if (typeof checkShareLink === 'function') checkShareLink();
+      if (typeof initMode === 'function') initMode();
+    }, 300);
   }
 
-  window.smSignOut = function() {
-    localStorage.removeItem(KEY);
-    try { google.accounts.id.disableAutoSelect(); } catch(e){}
+  window.smSignOut = async function() {
+    await _supabase.auth.signOut();
+    window._smSession = null;
     document.getElementById('sm-signout-menu').style.display = 'none';
     document.getElementById('sm-user-chip').style.display = 'none';
     document.getElementById('sm-login-overlay').style.display = 'flex';
+    document.getElementById('sm-google-btn').innerHTML =
+      '<button onclick="smGoogleLogin()" style="display:flex;align-items:center;gap:10px;padding:10px 24px;border:1px solid #d4cfc4;border-radius:8px;background:#fff;font-family:\'DM Sans\',sans-serif;font-size:15px;cursor:pointer;color:#1a1a2e;box-shadow:0 1px 3px rgba(0,0,0,.1)">' +
+      '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px"> 使用 Google 账号登录</button>';
+  };
+
+  window.smGoogleLogin = async function() {
     var btn = document.getElementById('sm-google-btn');
-    btn.innerHTML = '';
-    tryRender();
+    btn.innerHTML = '<span style="color:#7a7568;font-size:14px">跳转中...</span>';
+    var { error } = await _supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/' }
+    });
+    if (error) {
+      btn.innerHTML = '<button onclick="smGoogleLogin()" style="display:flex;align-items:center;gap:10px;padding:10px 24px;border:1px solid #d4cfc4;border-radius:8px;background:#fff;font-family:\'DM Sans\',sans-serif;font-size:15px;cursor:pointer;color:#1a1a2e;box-shadow:0 1px 3px rgba(0,0,0,.1)"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px"> 使用 Google 账号登录</button>';
+      alert('登录失败：' + error.message);
+    }
   };
 
   document.addEventListener('click', function(e) {
@@ -1581,45 +1617,31 @@ window.addEventListener('load', function() {
     }
   });
 
-  function onSignIn(resp) {
-    var parts = resp.credential.split('.');
-    var pad = parts[1].replace(/-/g,'+').replace(/_/g,'/');
-    while(pad.length%4) pad+='=';
-    try {
-      var p = JSON.parse(atob(pad));
-      var user = {name:p.name, email:p.email, picture:p.picture};
-      localStorage.setItem(KEY, JSON.stringify(user));
-      smShowApp(user);
-    } catch(e) { alert('登录失败，请重试'); }
+  // Render login button
+  function renderLoginBtn() {
+    document.getElementById('sm-google-btn').innerHTML =
+      '<button onclick="smGoogleLogin()" style="display:flex;align-items:center;gap:10px;padding:10px 24px;border:1px solid #d4cfc4;border-radius:8px;background:#fff;font-family:\'DM Sans\',sans-serif;font-size:15px;cursor:pointer;color:#1a1a2e;box-shadow:0 1px 3px rgba(0,0,0,.1)">' +
+      '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px"> 使用 Google 账号登录</button>';
   }
 
-  function tryRender() {
-    if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.initialize({client_id: CID, callback: onSignIn, auto_select: false});
-      google.accounts.id.renderButton(
-        document.getElementById('sm-google-btn'),
-        {type:'standard', theme:'outline', size:'large', locale:'zh_CN'}
-      );
-    } else {
-      setTimeout(tryRender, 300);
+  // Listen for auth state changes
+  _supabase.auth.onAuthStateChange(function(event, session) {
+    window._smSession = session;
+    if (session && session.user) {
+      smShowApp(session.user);
     }
-  }
+  });
 
-  // On load: check saved session
-  var saved = localStorage.getItem(KEY);
-  if (saved) {
-    try {
-      smShowApp(JSON.parse(saved));
-      // Init Google silently for future use
-      window.addEventListener('load', function() {
-        if (typeof google !== 'undefined' && google.accounts) {
-          google.accounts.id.initialize({client_id: CID, callback: onSignIn});
-        }
-      });
-    } catch(e) { localStorage.removeItem(KEY); tryRender(); }
-  } else {
-    window.addEventListener('load', tryRender);
-  }
+  // Check session on load
+  window.addEventListener('load', async function() {
+    var { data } = await _supabase.auth.getSession();
+    if (data.session && data.session.user) {
+      window._smSession = data.session;
+      smShowApp(data.session.user);
+    } else {
+      renderLoginBtn();
+    }
+  });
 })();
 </script>
 
