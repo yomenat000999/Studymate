@@ -1096,10 +1096,71 @@ async function callClaude(messages, systemPrompt, onChunk) {
   }
 }
 
+// ============ PLAN ENFORCEMENT ============
+var _cachedPlan = null;
+var _planLoadTime = 0;
+
+async function getUserPlan() {
+  // Cache plan for 5 minutes
+  if (_cachedPlan && Date.now() - _planLoadTime < 300000) return _cachedPlan;
+  try {
+    var s = await window._smSupabase.auth.getSession();
+    if (!s.data.session) return 'free';
+    var { data } = await window._smSupabase
+      .from('user_usage')
+      .select('plan, chat_monthly_used, chat_monthly_limit, transcribe_seconds_used, transcribe_seconds_limit')
+      .eq('user_id', s.data.session.user.id)
+      .single();
+    _cachedPlan = data ? data.plan : 'free';
+    _planLoadTime = Date.now();
+    return _cachedPlan;
+  } catch(e) { return 'free'; }
+}
+
+function showUpgradePrompt(feature) {
+  var panel = document.getElementById('upgrade-panel');
+  if (panel) {
+    panel.style.display = 'block';
+    showToast(`「${feature}」是 Pro/Max 专属功能，请升级后使用 ⚡`);
+  } else {
+    if (confirm(`「${feature}」是 Pro/Max 专属功能。\n\n点确定去升级？`)) {
+      window.open('/landing.html#pricing', '_blank');
+    }
+  }
+}
+
+async function requirePro(featureName) {
+  var plan = await getUserPlan();
+  if (plan === 'free') { showUpgradePrompt(featureName); return false; }
+  return true;
+}
+
+// Track free tier usage counts
+async function checkAndIncrementFreeLimit(limitKey, maxCount, featureName) {
+  var plan = await getUserPlan();
+  if (plan !== 'free') return true; // Pro/Max has no limit
+  var key = 'sm_free_' + limitKey + '_' + new Date().toISOString().slice(0, 7); // monthly key
+  var dailyKey = 'sm_free_' + limitKey + '_' + new Date().toISOString().slice(0, 10); // daily key
+  var useKey = limitKey.includes('chat') ? dailyKey : key;
+  var count = parseInt(localStorage.getItem(useKey) || '0');
+  if (count >= maxCount) {
+    var period = limitKey.includes('chat') ? '今天' : '本月';
+    showToast(`${period}免费额度已用完（${maxCount}次），升级 Pro 可无限使用 ⚡`);
+    var panel = document.getElementById('upgrade-panel');
+    if (panel) panel.style.display = 'block';
+    return false;
+  }
+  localStorage.setItem(useKey, count + 1);
+  return true;
+}
+// ============ END PLAN ENFORCEMENT ============
+
 async function generateStudyMaterial() {
   if (!currentCourseId) { showToast('请先选择课程'); return; }
   const content = document.getElementById('courseContentText').value.trim().substring(0, 1500);
   if (!content) { showToast('请先上传课件或粘贴内容'); return; }
+  // Free: 3 times/month
+  if (!await checkAndIncrementFreeLimit('generate', 3, 'AI生成材料')) return;
   const opts = getSelectedOpts();
   const lang = document.getElementById('outputLang').value;
   const btn = document.getElementById('genBtn');
@@ -1272,6 +1333,8 @@ function getContent() {
 async function genExam(type) {
   const ctx = getContent();
   if (!ctx) { showToast('请先上传课件或录音内容'); return; }
+  // vocab is Pro only; quiz has free limit
+  if (type === 'vocab' && !await requirePro('词汇表')) return;
   const prompts = {
     sa: '根据以下课程内容，生成3道简答题，每题含参考答案。用中英双语。\n\n' + ctx,
     vocab: '从以下课程内容提取10-15个重要专业词汇，以表格形式输出：\n| 英文词汇 | 中文解释 | 例句 |\n\n' + ctx
@@ -1294,6 +1357,8 @@ async function genExam(type) {
 async function genInteractiveQuiz() {
   const ctx = getContent();
   if (!ctx) { showToast('请先上传课件或录音内容'); return; }
+  // Free: 5 quiz/month
+  if (!await checkAndIncrementFreeLimit('quiz', 5, '练习题')) return;
   const out = document.getElementById('quizOutput');
   const qc = document.getElementById('quizContainer');
   const ql = document.getElementById('quizList');
@@ -1408,6 +1473,7 @@ function answerQuiz(qi, chosen) {
 }
 
 async function genEssayHelper() {
+  if (!await requirePro('Essay 辅助')) return;
   const topic = prompt('请输入作业题目或论文主题：');
   if (!topic || !topic.trim()) return;
   const ctx = getContent();
@@ -1442,7 +1508,8 @@ function initMode() {
   setMode(saved);
 }
 
-function artsFormatCitation() {
+async function artsFormatCitation() {
+  if (!await requirePro('引用格式化')) return;
   document.getElementById('artsCitationBox').style.display = 'block';
   document.getElementById('artsCompareBox').style.display = 'none';
   document.getElementById('artsCriticalBox').style.display = 'none';
@@ -1501,6 +1568,7 @@ async function doCritical() {
 }
 
 async function sciExtractFormulas() {
+  if (!await requirePro('理科专属工具')) return;
   const ctx = getContent();
   if (!ctx) { showToast('请先上传课件内容'); return; }
   const out = document.getElementById('quizOutput');
@@ -1543,6 +1611,7 @@ function updateJointVisibility() {
 }
 
 async function runJointReview() {
+  if (!await requirePro('联合分析')) return;
   const course = getCourse(currentCourseId);
   if (!course) return;
   const btn = document.getElementById('jointBtn');
@@ -1628,7 +1697,10 @@ function quickAsk(prompt) {
   sendChat();
 }
 async function sendChat() {
-  const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q) return; input.value=''; addMsg('user',q);
+  const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q) return;
+  // Free: 3 chat/day
+  if (!await checkAndIncrementFreeLimit('chat', 3, 'AI 问答')) return;
+  input.value=''; addMsg('user',q);
   const content=document.getElementById('courseContentText').value.trim();
   const transcript=transcriptText||document.getElementById('manualTranscript').value.trim();
   const ctx = [content&&`【课件】\n${content.substring(0,800)}`, transcript&&`【录音】\n${transcript.substring(0,1000)}`].filter(Boolean).join('\n\n');
