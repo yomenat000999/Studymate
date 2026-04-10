@@ -1616,7 +1616,9 @@ window.addEventListener('load', function() {
     document.getElementById('sm-user-pic').src = meta.avatar_url || meta.picture || '';
     document.getElementById('sm-user-name').textContent = meta.full_name || meta.name || user.email || '';
     document.getElementById('sm-user-email').textContent = user.email || '';
-    // Show upgrade button for free users, load plan info
+    // Show upgrade button immediately, then load plan info
+    var upgradeBtn = document.getElementById('upgrade-btn');
+    if (upgradeBtn) upgradeBtn.style.display = 'block';
     loadUserPlan();
     setTimeout(function() {
       if (typeof checkShareLink === 'function') checkShareLink();
@@ -1720,7 +1722,7 @@ window.addEventListener('load', function() {
       document.getElementById('sm-plan-info').textContent = '当前套餐：' + (planLabels[plan] || plan);
       // Show upgrade button only for free users
       var upgradeBtn = document.getElementById('upgrade-btn');
-      if (upgradeBtn) upgradeBtn.style.display = plan === 'free' ? 'block' : 'none';
+      if (upgradeBtn) upgradeBtn.style.display = (plan === 'free' || plan === undefined) ? 'block' : 'none';
     } catch(e) {}
   };
 
