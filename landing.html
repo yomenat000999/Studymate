@@ -397,9 +397,47 @@ function toggleBilling() {
     document.getElementById('max-monthly-note').style.display = 'block';
   }
 }
-function startCheckout(plan) {
-  // Stripe checkout — will be wired up after Stripe setup
-  window.location.href = '/checkout?plan=' + plan + (isAnnual ? '&billing=annual' : '&billing=monthly');
+async function startCheckout(plan) {
+  var btn = event.target;
+  var origText = btn.textContent;
+  btn.textContent = '跳转中...';
+  btn.style.opacity = '0.7';
+  btn.style.pointerEvents = 'none';
+
+  try {
+    // Get auth token
+    var authH = {};
+    if (window._smSupabase) {
+      var { data } = await window._smSupabase.auth.getSession();
+      if (data.session) authH = { 'Authorization': 'Bearer ' + data.session.access_token };
+    }
+    if (!authH.Authorization) {
+      alert('请先登录后再订阅');
+      window.location.href = '/';
+      return;
+    }
+
+    var billing = isAnnual ? 'annual' : 'monthly';
+    var res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authH },
+      body: JSON.stringify({ plan, billing })
+    });
+    var data2 = await res.json();
+    if (data2.url) {
+      window.location.href = data2.url;
+    } else {
+      alert('出错了：' + (data2.error || '请重试'));
+      btn.textContent = origText;
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    }
+  } catch(e) {
+    alert('网络错误，请重试');
+    btn.textContent = origText;
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  }
 }
 </script>
 
