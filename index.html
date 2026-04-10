@@ -1073,19 +1073,27 @@ async function callClaude(messages, systemPrompt, onChunk) {
     }
     return fullText;
   }
-  // Non-streaming fallback
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json', ...authH},
-    body: JSON.stringify({messages, system: systemPrompt, max_tokens: 2500})
-  });
-  if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
-  const text = await res.text();
+  // Non-streaming (reliable on Vercel free tier)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
   try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', ...authH},
+      body: JSON.stringify({messages, system: systemPrompt, max_tokens: 2500}),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || '请求失败'); }
+    const text = await res.text();
     const data = JSON.parse(text);
     if (!data.content) throw new Error(data.error || '网络出错');
     return data.content[0].text;
-  } catch(e) { throw new Error('服务器错误，请重试'); }
+  } catch(e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') throw new Error('请求超时，请重试');
+    throw e;
+  }
 }
 
 async function generateStudyMaterial() {
@@ -1109,9 +1117,8 @@ async function generateStudyMaterial() {
     const prepDiv = document.getElementById('prepResultContent');
     document.getElementById('prepResult').style.display = 'block';
     if (prepDiv) prepDiv.textContent = '';
-    const result = await callClaude([{ role:'user', content:`请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念，专业术语保留英文并用中文解释。` }], `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料。`, (chunk) => {
-      if (prepDiv) prepDiv.textContent += chunk;
-    });
+    const result = await callClaude([{ role:'user', content:`请根据以下课件内容，生成${opts.join('、')}。\n\n课件内容：\n${content}\n\n要求：语言${lang}，突出核心概念，专业术语保留英文并用中文解释。` }], `你是专门帮助留学生学习的AI助手，用${lang}生成清晰的学习资料。`);
+    if (prepDiv) prepDiv.textContent = result;
     const course = getCourse(currentCourseId);
     if (course) { course.prepResult = result; saveCourses(); }
     showToast('生成完成 ✓');
