@@ -1626,20 +1626,32 @@ window.addEventListener('load', function() {
       var checkoutPlan = params.get('checkout_plan');
       var checkoutBilling = params.get('checkout_billing');
       if (checkoutPlan) {
+        // Show a visible prompt so user knows what's happening
+        showToast('✅ 已登录！正在跳转到付款页面...');
         setTimeout(async function() {
           try {
             var s = await window._smSupabase.auth.getSession();
-            if (!s.data.session) return;
+            if (!s.data.session) {
+              showToast('登录状态获取失败，请重试');
+              return;
+            }
             var authH = { 'Authorization': 'Bearer ' + s.data.session.access_token };
             var res = await fetch('/api/checkout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', ...authH },
               body: JSON.stringify({ plan: checkoutPlan, billing: checkoutBilling || 'monthly' })
             });
-            var data = await res.json();
-            if (data.url) window.location.href = data.url;
-          } catch(e) { console.error('Auto checkout failed', e); }
-        }, 500);
+            var d = await res.json();
+            if (d.url) {
+              window.location.href = d.url;
+            } else {
+              showToast('跳转失败：' + (d.error || '请重试'));
+            }
+          } catch(e) {
+            showToast('网络错误，请重试');
+            console.error('Auto checkout failed', e);
+          }
+        }, 1500);
       }
     }, 300);
   }
